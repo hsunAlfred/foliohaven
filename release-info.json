@@ -1,7 +1,7 @@
 {
   "format": 1,
   "product": "foliohaven",
-  "version": "0.3.1",
+  "version": "1.0.0",
   "files": [
     {
       "path": ".devcontainer/check-environment.sh",
@@ -43,7 +43,7 @@
       "path": ".env.example",
       "bytes": 637,
       "mode": "664",
-      "sha256": "91c7fea2fab82813a5d01de1ef27f810c3a82e9fa0a6a2a6da746f31bd4467c8"
+      "sha256": "3637b87ed48298288ab0cb1a9c98374a1ea1e8e376bdb6188711af794ed1964f"
     },
     {
       "path": ".gitattributes",
@@ -83,9 +83,9 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 4994,
+      "bytes": 12816,
       "mode": "664",
-      "sha256": "9216dc55ae151a6aead0ca5016e5174a5da260da4eb57ab701093798340bfb86"
+      "sha256": "6a8f313bae9204128f10b487b0ac09cc5b5221e8231748e40a4c40e5969006e6"
     },
     {
       "path": "cloudflare.config.example.json",
@@ -187,13 +187,13 @@
       "path": "docker-compose.yml",
       "bytes": 1692,
       "mode": "664",
-      "sha256": "6057ceb4d36c8127276a0c9b3660db54cc1d3ec80157f7dc76c0cb1225d425df"
+      "sha256": "995f89e46a82b79bcc833ebbbd8e1d3be8c0ed785b72f65ba7294b1ebc83b232"
     },
     {
       "path": "Dockerfile",
       "bytes": 3420,
       "mode": "664",
-      "sha256": "a86446dc68222b67e4be02cce286d09fa8f1663408ae050cdaeeebb9639d28cb"
+      "sha256": "ab0967872006001e7e99cc636c97f6e556a1ff46470a23e69c8e9ee5c292148a"
     },
     {
       "path": "docs/blog/一般獨立頁面建立流程.md",
@@ -205,7 +205,7 @@
       "path": "docs/blog/全靜態部落格系統 — 需求與技術架構規格 v1.0.md",
       "bytes": 88770,
       "mode": "664",
-      "sha256": "346825ce4320b10c7eb8ab8fbe1247242f543dbc825cf0db2289d3f321be54ac"
+      "sha256": "3b677ec23131d4df2eaff6b4a6763900f56e6b0ebb690ae9ee9b321163bff7bd"
     },
     {
       "path": "docs/blog/新增文章流程.md",
@@ -221,9 +221,9 @@
     },
     {
       "path": "docs/blog/版本更新與備份.md",
-      "bytes": 8106,
+      "bytes": 8489,
       "mode": "664",
-      "sha256": "5d1834f0d021c8399727e7a41bafb9e3d906d3bf238c4ce472c84813c1354df9"
+      "sha256": "8a80e37eae86db0b562d89f7d2e59f742fdf434824072ae2832b876c6d47c6fc"
     },
     {
       "path": "docs/blog/跨平台閱讀與版型整合Memo.md",
@@ -239,9 +239,9 @@
     },
     {
       "path": "docs/release/版本發行.md",
-      "bytes": 4792,
+      "bytes": 4913,
       "mode": "664",
-      "sha256": "0916b174f3344f233e01b0c45cd34e52db41237520d0a763be9ad02683a4e3dd"
+      "sha256": "9e5cd8ac9d98266aabb8ee195b875db1598d65bdbf2b21a916a248532f60b15d"
     },
     {
       "path": "eslint.config.mjs",
@@ -283,13 +283,13 @@
       "path": "package.json",
       "bytes": 3441,
       "mode": "664",
-      "sha256": "7f8ffcf62eaa4e9a7c9b88b2af9f1234a888ef868b3549a859b419bbfa2e7fcf"
+      "sha256": "47a6adf9c20be85f88e4310cb73202e65cab372ef17f313589e51a567a355186"
     },
     {
       "path": "packages/core/package.json",
       "bytes": 604,
       "mode": "664",
-      "sha256": "848a9f5e930fa43ec3b01ee2d133f406677d88c8b7f86bbd43d28103a2942d95"
+      "sha256": "7396ecebcbe421f8d592cd9ca660cd2baaeb7bb40f5a429b4867428e99227b34"
     },
     {
       "path": "packages/core/src/content/index.ts",
@@ -457,7 +457,7 @@
       "path": "packages/ui/package.json",
       "bytes": 576,
       "mode": "664",
-      "sha256": "cebbaec398a381a010b1c5eed0fcb09b4ccdc2102061de45181b4996b093a6d3"
+      "sha256": "78605bce32ad6e9026ddf9df987dde970de2058591cc594ba74126e943642f94"
     },
     {
       "path": "packages/ui/src/article/ArticlePage.tsx",
@@ -611,9 +611,9 @@
     },
     {
       "path": "README.md",
-      "bytes": 18526,
+      "bytes": 18561,
       "mode": "664",
-      "sha256": "7cd9ece4c0f1e1c45829014d4347e951bb8d034740389f2dfab2b61dee21d473"
+      "sha256": "f505c13f339b527dd0b42ec6e2229f5527c4bdb24cbac77aabdc133bfffe611f"
     },
     {
       "path": "release/manifest.json",
@@ -907,7 +907,7 @@
       "path": "server/package.json",
       "bytes": 837,
       "mode": "664",
-      "sha256": "42303240258192fbd662abd90b05724cf76b226e879cfeafc827d5a57bd16d1f"
+      "sha256": "b5073a833530fd42ef2ec0c305c2fc31d9aaf76b12b0d21dd3556c6ce64a08fe"
     },
     {
       "path": "server/src/build/artifacts/index.ts",
@@ -1291,7 +1291,7 @@
       "path": "site/package.json",
       "bytes": 962,
       "mode": "664",
-      "sha256": "b2f13da70a03a163264c417621f4d41e5e33c99d97d877b7aeea10cc2aa85a47"
+      "sha256": "edf1e4cf68ec871b635dac378f5783abeddf8b5b96c7c7392b4fda9936c4f045"
     },
     {
       "path": "site/src/components/ArticlesSearch.tsx",
@@ -1453,7 +1453,7 @@
       "path": "studio/package.json",
       "bytes": 791,
       "mode": "664",
-      "sha256": "a1fdd5d2790dd4830e78ef3b583e72d52c66e6a56dec5b1ab0d92092c5d820b9"
+      "sha256": "8072ab9762589618aa7ddb557b0a88ce17bf7a06922ba374149a8f902f2e5cbe"
     },
     {
       "path": "studio/public/licenses/NotoSansTC-Fontsource-LICENSE.txt",
