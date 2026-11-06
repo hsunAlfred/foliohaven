@@ -2,6 +2,90 @@
 
 本文件記錄各版本對使用者有影響的功能與使用要求。更新既有網站前，請先閱讀[版本更新與備份](docs/blog/版本更新與備份.md)。
 
+## 1.0.0
+
+Foliohaven 1.0.0 是首個正式版本，提供可直接修改原始碼的靜態網站與部落格系統。你可以自行或透過 AI Agent 製作首頁、About、FAQ 等固定頁面與共用文章版型，再用 Studio 或 IDE 管理文章、圖片、影片與網站設定。新增文章只需 HTML 正文與 JSON 資料，不必逐篇建立 React 或 Astro 元件。
+
+本版完整收錄預覽階段已具備的系統能力。v0.x.x 定位為預覽版本，既有公開預覽版的來源與附件繼續保留；第一次使用請從本版與下列指南開始。
+
+### 完整功能
+
+- **固定頁面與共用版型**：React 製作主要頁面與展示元件，Astro 產生完整 HTML；可調整字型、排版、導覽、Header／Footer，文章共用一套版型。
+- **Studio 與 IDE 工作流程**：管理文章、草稿、發布與更新時間、分類、Tag、精選圖片、網站設定與媒體；支援桌機／平板／手機文章預覽。也能切換 IDE 模式，由編輯器或 AI 修改來源。
+- **文章與內容組織**：HTML 正文、JSON 屬性、獨立摘要、目錄、分頁、可排序的延伸閱讀，以及首頁精選文章設定；提供分類／Tag 總覽與個別頁面。
+- **搜尋與 SEO**：關鍵字正規化與空格分詞、分類／Tag 組合篩選及 URL 狀態；提供逐欄 SEO 繼承、Meta／OG 分享資訊、canonical、索引設定、RSS、Sitemap 與完整網站圖示。
+- **圖片與影片**：媒體庫管理、圖片尺寸選擇、替代文字、影片封面與處理流程，支援安全的 SVG／ICO、1200×630 分享圖與裁切／留白。
+- **保存、預覽與建置**：來源驗證、版本、衝突與復原機制；完整建置通過內容、HTML、SEO、路由、連結與資源檢查後才更新成功網站，失敗保留上次成功產物。
+- **Cloudflare 選用部署**：提供 Workers Static Assets＋R2 發布、dry-run、狀態查詢、覆寫備份、受控還原與正式網址驗證，支援大影片及 Range。
+- **完整可修改來源**：隨附 Dockerfile／Compose、選用的 Dev Container、AI Agent 指引、使用文件、單元／整合／三瀏覽器測試，以及一個中性首頁與五篇教學文章。
+
+### 下載與啟動
+
+請下載同一版本的兩個正式附件：
+
+- [foliohaven-1.0.0-source.tar.gz](https://github.com/hsunAlfred/foliohaven/releases/download/v1.0.0/foliohaven-1.0.0-source.tar.gz)
+- [SHA256SUMS](https://github.com/hsunAlfred/foliohaven/releases/download/v1.0.0/SHA256SUMS)
+
+完成 SHA256 校驗並解壓到新目錄，再選擇 Docker 或自行配置原生 Linux。詳細校驗與解壓步驟見[版本取得與打包指南](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/docs/release/%E7%89%88%E6%9C%AC%E7%99%BC%E8%A1%8C.md)；來源包包含完整程式、範例、文件與測試。
+
+**Docker**：主機備妥 Docker 與 Compose，在專案根目錄執行：
+
+```bash
+docker compose up -d --build --wait --wait-timeout 600
+```
+
+首次會在本機建置 image 並準備工具與依賴；沒有預設的外部 image registry。Linux 使用者的 UID／GID 如非1000，先依 README 設定 `.env`。不需要 VS Code 或特定 AI 服務。
+
+**原生 Linux**：使用 Node.js `26.12.1`、pnpm `12.15.0`，並依 README 準備 FFmpeg／ffprobe、編譯工具與 Playwright。原生方式與 Docker 使用同一套來源、操作及檢查；其他主機系統建議使用 Docker。
+
+| 網址                     | 用途                         |
+| ------------------------ | ---------------------------- |
+| `http://localhost:5173/` | Studio：文章、媒體與網站設定 |
+| `http://localhost:4321/` | 目前保存內容與程式的來源預覽 |
+| `http://localhost:4322/` | 最近一次成功建立的完整網站   |
+
+### 第一次架站的順序
+
+1. 依 [README](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/README.md) 完成環境安裝並開啟範例。
+2. 修改首頁，建立 About、FAQ 等固定頁面，再決定所有文章共用的版型與樣式。
+3. 在 Studio「全站設定」填寫網站、作者、導覽、圖示及正式網站網址；範例設定可替換。
+4. 使用 Studio 或 IDE／AI 新增文章、整理分類與 Tag、上傳媒體及設定 SEO。透過 IDE／AI 修改資料前先切換 IDE 模式。
+5. 在4321檢查來源預覽；執行 Studio「更新網站」成功後，再到4322檢查完整產物。
+6. 交付完整 `dist/` 至靜態網站服務。使用 Cloudflare 時，依部署指南填妥自己的設定、建立 R2 bucket，並完成首次網域分流；日常以 `pnpm deploy:cloudflare` 發布更新。
+
+公開網站只需靜態檔案，不需要資料庫、Studio、管理 API 或 Node.js 服務。保存文章、更新本機網站與部署到公開網址是不同操作。
+
+### 原始碼與 AI Agent 使用
+
+固定頁面、文章共用版型與 Studio 未涵蓋的修改，都可以直接編輯原始碼，再重新檢查與建置。文章內容與網站設定以檔案保存，方便自行備份及版本管理。
+
+使用 AI Agent 時，請先讓它閱讀 [AGENTS.md](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/AGENTS.md) 與 README，再描述要修改的頁面、樣式或內容。人與 AI 使用相同檔案與規則，不要求特定 AI 平台；測試與隔離 fixture 也隨來源提供。
+
+### 使用範圍與授權
+
+- Studio 是單人本機管理工具，同一工作區只啟動一組作者服務；公開部署僅交付 `dist/`。
+- 首頁、固定頁與共用文章版型以原始碼客製；日常文章及網站設定可透過 Studio 管理。
+- Cloudflare 為選用部署方式，帳號、憑證、R2 bucket 與首次網域設定由使用者準備。上傳成功後仍需核對正式網址。
+- 網站圖示與 Manifest 支援不包含 Service Worker 或離線 PWA 能力。
+- 自有程式、文件與示範內容採 [MIT License](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/LICENSE)；第三方資源維持各自授權。使用者自己的獨立文章與素材可自行決定授權。
+
+### 從預覽版升級
+
+本次從0.3.1升至1.0.0沒有功能行為、依賴或資料格式變更。既有文章、媒體、網站設定、自訂版型及 Cloudflare 設定可沿用；請先備份完整專案，在副本整合版本差異並驗證，再採用新版。若 `.env` 有 `RELEASE_VERSION`，需改為 `1.0.0`。
+
+從更早的預覽版升級，請同時閱讀[版本更新與備份](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/docs/blog/%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E8%88%87%E5%82%99%E4%BB%BD.md)中的歷史相容性說明，不能用新版本範例覆蓋自己的網站。
+
+### 文件與問題回報
+
+- [README：安裝、啟動、預覽、建置與備份](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/README.md)
+- [固定頁面建立流程](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/docs/blog/%E4%B8%80%E8%88%AC%E7%8D%A8%E7%AB%8B%E9%A0%81%E9%9D%A2%E5%BB%BA%E7%AB%8B%E6%B5%81%E7%A8%8B.md)
+- [共用版型與樣式調整](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/docs/blog/%E7%89%88%E5%9E%8B%E8%88%87%E6%A8%A3%E5%BC%8F%E8%AA%BF%E6%95%B4.md)
+- [新增文章、SEO 與媒體管理](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/docs/blog/%E6%96%B0%E5%A2%9E%E6%96%87%E7%AB%A0%E6%B5%81%E7%A8%8B.md)
+- [Cloudflare 部署](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/docs/deployment/Cloudflare%E9%83%A8%E7%BD%B2.md)
+- [版本更新與備份](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/docs/blog/%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E8%88%87%E5%82%99%E4%BB%BD.md)
+- [AI Agent 指引](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/AGENTS.md)
+- [問題回報與貢獻方式](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/CONTRIBUTING.md)／[Foliohaven Issues](https://github.com/hsunAlfred/foliohaven/issues)
+
 ## 0.3.1
 
 - 整理操作文件與來源包說明，更新版本取得、解壓及打包範例。

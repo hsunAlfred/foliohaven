@@ -56,7 +56,7 @@ COPY --from=builder /workspaces/foliohaven/dist/ /
 FROM browser-toolchain AS release
 ARG LOCAL_UID=1000
 ARG LOCAL_GID=1000
-ARG RELEASE_VERSION=0.3.1
+ARG RELEASE_VERSION=1.0.0
 USER root
 # Align only image-owned files; the host workspace is never recursively chowned.
 RUN case "$LOCAL_UID" in ''|*[!0-9]*) exit 1 ;; esac \

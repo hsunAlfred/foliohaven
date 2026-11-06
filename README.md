@@ -2,7 +2,7 @@
 
 可直接修改原始碼的靜態網站與部落格系統。用 React 製作首頁、FAQ、About 等固定頁面，調整一套共用文章版型，再用 Studio 或 IDE 管理 HTML／JSON 文章與網站設定。也可以讓 AI Agent 依 [AGENTS.md](AGENTS.md) 協助完成這些工作；新增文章不必再寫 React 或 Astro。
 
-0.3.1 隨附一個首頁與五篇操作指南，示範分類、Tag、搜尋、SEO、圖片及影片，並提供 Cloudflare Worker／R2 發布流程。支援獨立摘要、逐欄 SEO 繼承、延伸閱讀、分類與 Tag 組合搜尋，以及 SVG／ICO 與完整網站圖示。這些範例可以修改或移除。公開網站只交付完整 `dist/`，不需要 Studio、管理 API、資料庫或 Node.js 服務。
+Foliohaven 1.0.0 是首個正式版本，隨附一個首頁與五篇操作指南，示範分類、Tag、搜尋、SEO、圖片及影片，並提供 Cloudflare Worker／R2 發布流程。支援獨立摘要、逐欄 SEO 繼承、延伸閱讀、分類與 Tag 組合搜尋，以及 SVG／ICO 與完整網站圖示。這些範例可以修改或移除。公開網站只交付完整 `dist/`，不需要 Studio、管理 API、資料庫或 Node.js 服務。
 
 從 [GitHub Releases](https://github.com/hsunAlfred/foliohaven/releases) 取得 `foliohaven-版本-source.tar.gz` 與 `SHA256SUMS`，或選擇對應的版本 tag。公開 repository 的 `main` 提供最新公開來源，根目錄可直接依本文件操作。下載包包含原始碼、測試、範例、使用文件及 Docker 建置設定，解壓與校驗方式見[版本發行](docs/release/版本發行.md)。
 
