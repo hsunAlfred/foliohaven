@@ -1,0 +1,65 @@
+name: foliohaven-release
+
+services:
+  app: &release-app
+    image: ${RELEASE_IMAGE_NAME:-foliohaven}:${RELEASE_VERSION:-0.3.1}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: release
+      args:
+        LOCAL_UID: ${LOCAL_UID:-1000}
+        LOCAL_GID: ${LOCAL_GID:-1000}
+        RELEASE_VERSION: ${RELEASE_VERSION:-0.3.1}
+    init: true
+    user: node
+    working_dir: /workspaces/foliohaven
+    shm_size: 1gb
+    stop_grace_period: 60s
+    volumes:
+      - type: bind
+        source: .
+        target: /workspaces/foliohaven
+        bind:
+          create_host_path: false
+    ports:
+      - '127.0.0.1:${SITE_PORT:-4321}:4321'
+      - '127.0.0.1:${STUDIO_PORT:-5173}:5173'
+      - '127.0.0.1:${PREVIEW_PORT:-4322}:4322'
+    healthcheck:
+      test: ['CMD', 'node', 'scripts/healthcheck.mjs', '--release']
+      interval: 10s
+      timeout: 8s
+      start_period: 600s
+      retries: 6
+  repair:
+    <<: *release-app
+    profiles: [repair]
+    command: ['node', 'scripts/start.mjs', '--container', '--repair']
+    ports:
+      - '127.0.0.1:${STUDIO_PORT:-5173}:5173'
+    healthcheck:
+      test: ['CMD', 'node', 'scripts/healthcheck.mjs', '--studio']
+      interval: 10s
+      timeout: 8s
+      start_period: 600s
+      retries: 6
+  dev:
+    profiles: [development]
+    image: foliohaven-dev:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    init: true
+    user: node
+    working_dir: /workspaces/foliohaven
+    command: ['pnpm', 'dev']
+    shm_size: 1gb
+    stop_grace_period: 30s
+    healthcheck:
+      test: ['CMD', 'node', 'scripts/healthcheck.mjs']
+      interval: 10s
+      timeout: 8s
+      start_period: 60s
+      retries: 6

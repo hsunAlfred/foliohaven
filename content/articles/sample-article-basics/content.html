@@ -1,0 +1,152 @@
+<p>
+  第一次使用時，先選擇原生環境或 Docker，做好首頁等固定頁面與共用文章版型，再開始日常寫作。
+  本篇串起啟動、建站、設定與第一篇文章的完整順序；你可以自己操作，也可以讓熟悉的 AI Agent
+  依專案指引協助。文章正文以 HTML 保存，屬性另存為 JSON，新增文章不需要逐篇建立 React 元件或 Astro 頁面。
+</p>
+
+<h2 id="start-workspace">啟動工作室與兩種網站預覽</h2>
+<p>
+  先取得完整專案，依 README 選擇一種環境，以下命令都在專案根目錄執行。
+  使用提供的 Docker 時，先確認 Docker 可以運作，以及專案目錄能由容器的非 root 帳號讀寫，再執行：
+</p>
+<pre><code class="language-bash">docker compose up -d --build --wait --wait-timeout 600</code></pre>
+<p>
+  第一次啟動會準備依賴、檢查內容並建立初始網站，花費的時間通常比後續啟動長。
+  也可以自行依 README 配置 Node.js、pnpm、媒體工具與測試工具，然後在原生環境執行：
+</p>
+<pre><code class="language-bash">pnpm install --frozen-lockfile --prod=false
+pnpm build:packages
+pnpm --filter @foliohaven/server build
+pnpm start</code></pre>
+<p>
+  兩種方式都會啟動以下三個日常入口，也都能修改完整原始碼及執行測試；不需要使用特定編輯器。
+  Docker 啟動成功或原生終端顯示服務就緒後，在同一部主機的瀏覽器開啟網址。
+  若環境在遠端主機，先建立 SSH 連接埠轉送，瀏覽器的 localhost 才會對應到該主機。
+  同一份專案一次只啟動一組服務，不要同時啟動 Docker 與原生工作階段。
+</p>
+<table>
+  <caption>三個日常入口</caption>
+  <thead><tr><th scope="col">網址</th><th scope="col">用途</th><th scope="col">何時查看</th></tr></thead>
+  <tbody>
+    <tr><th scope="row"><code>http://localhost:5173/</code></th><td>Studio 工作室</td><td>新增文章、上傳媒體、調整設定與更新網站。</td></tr>
+    <tr><th scope="row"><code>http://localhost:4321/</code></th><td>目前來源的網站預覽</td><td>查看已保存內容，以及開發時的頁面與樣式修改。</td></tr>
+    <tr><th scope="row"><code>http://localhost:4322/</code></th><td>最近成功建立的網站</td><td>確認最後要交付的頁面、圖片、連結與 SEO。</td></tr>
+  </tbody>
+</table>
+<p>
+  工作室編輯器內的即時預覽可以先看未保存的內容；4321 讀取已保存且有效的來源；4322
+  則顯示最近一次成功建立的網站。這三種觀看方式各有用途，保存後仍須更新網站，4322 才會出現新版。
+</p>
+
+<h2 id="prepare-site">先完成固定頁面與共用文章版型</h2>
+<ol>
+  <li>先在 4321 與 4322 瀏覽本首頁及五篇指南，確認目前範例的頁面、圖片、影片、分類與搜尋效果。</li>
+  <li>依自己的網站需求修改首頁；需要 FAQ、About 等固定頁面時，依獨立頁面流程新增 React 頁面、Astro 入口與頁面登錄。</li>
+  <li>調整文章共用版型、字型、段落、圖片與表格樣式，以現有五篇文章確認同一套樣式能閱讀不同內容。</li>
+  <li>填入全站設定，確認導覽、分類、Tag 與預設 SEO，再開始新增自己的文章。</li>
+</ol>
+<p>
+  固定頁面與共用版型直接修改原始碼；Studio 負責文章、媒體及網站設定，不是固定頁面的視覺編輯器。
+  需要操作入口時，先看 <a href="/tools/local-editing/#independent-pages">固定頁面指南</a>與
+  <a href="/tools/local-editing/#article-template">共用文章版型指南</a>，完成後回到本篇繼續。
+  目前的首頁和五篇文章同時是可修改的展示材料，不必先刪除才能開始設計。
+</p>
+
+<h3 id="site-settings">填入網站的基本資料</h3>
+<ol>
+  <li>進入 Studio 的「全站設定」，設定網站名稱、描述、作者及顯示時區。</li>
+  <li>網站網址填預計公開使用的完整網址，並保留最後的斜線，例如 <code>https://example.invalid/</code>。</li>
+  <li>確認導覽與 SEO 預設值，按「保存全站設定」。此範例網址只供展示；準備公開網站時請換成自己的網址。</li>
+</ol>
+<p>
+  網站網址用於 canonical、RSS 與 Sitemap，不是本機工作室的位址。文章日期會依網站設定的顯示時區呈現，
+  不必為了讓本機預覽能開啟而將網站網址改成 localhost。
+</p>
+
+<h2 id="create-first-draft">建立第一篇草稿</h2>
+<ol>
+  <li>在「文章」按「新增文章」，填入標題並在正文編輯器輸入內容。</li>
+  <li>在文章設定選擇既有分類，填入網址名稱；例如分類為 <code>notes</code>、網址名稱為 <code>my-first-note</code>。</li>
+  <li>按「建立草稿」。成功後會取得文章識別碼，之後可以繼續修改並按「保存目前內容」。</li>
+  <li>使用即時預覽切換桌機、平板與手機，檢查段落、圖片、表格及目錄是否容易閱讀。</li>
+</ol>
+<p>
+  草稿可以保留未完成的內容，也不會進入公開網站。文章的本機識別碼用來定位檔案，
+  網址名稱與分類才組成公開 URL；你可以在 <a href="/tools/local-editing/#editing-files">IDE 編輯指南</a>
+  查看實際檔案位置。
+</p>
+
+<h2 id="article-structure">以段落與章節組織正文</h2>
+<p>
+  正文輸入 HTML 片段即可。文章主標題由標題欄位產生，正文從段落或 H2 開始，
+  不必加入 H1、整份網頁的 head 或 body。以下內容可以直接貼進正文編輯器：
+</p>
+<pre><code class="language-html">&lt;p&gt;這篇文章記錄我的第一個主題。&lt;/p&gt;
+&lt;h2 id="preparation"&gt;準備工作&lt;/h2&gt;
+&lt;p&gt;說明需要的資料與操作環境。&lt;/p&gt;
+&lt;h3 id="first-step"&gt;第一個步驟&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;完成第一項操作。&lt;/li&gt;
+  &lt;li&gt;確認結果，再進行下一項。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="result"&gt;預期結果&lt;/h2&gt;
+&lt;p&gt;描述完成後會看到什麼。&lt;/p&gt;</code></pre>
+<h3 id="heading-levels">使用適當的標題層級</h3>
+<p>
+  H2 是主要章節，H3 是章節內的小節；系統會以這兩個層級建立文章目錄。
+  每個章節標題都需要唯一、非空且不含空白的 id，例如 <code>preparation</code>。
+  文字大小與間距由共用文章樣式處理，正文只需要表達內容結構。
+</p>
+
+<h2 id="publish-and-build">完成發布資訊，再更新網站</h2>
+<ol>
+  <li>填寫發布與更新時間，可直接輸入，也可使用日曆和時間選擇器；更新時間不能早於發布時間。</li>
+  <li>填寫文章摘要，檢查 Meta Description 的有效值與繼承來源，以及分類、Tag、圖片、連結和欄位提示。</li>
+  <li>按「發布目前內容」，核對確認內容後完成發布；之後編輯已發布文章時，使用「保存目前內容」。</li>
+  <li>前往「網站更新與工作」按「更新網站」，開啟該筆工作查看進度及結果。</li>
+  <li>工作成功後，到 4322 開啟文章，確認首頁、分類、搜尋與正文都看得到新內容。</li>
+</ol>
+<p>也可以從主機終端執行來源檢查與正式建置：</p>
+<pre><code class="language-bash">docker compose exec app pnpm validate:content
+docker compose exec app pnpm build</code></pre>
+<p>使用原生環境時，在另一個終端執行相同工作，不加 Docker 前綴：</p>
+<pre><code class="language-bash">pnpm validate:content
+pnpm build</code></pre>
+<p>
+  第一個命令檢查來源及媒體，第二個命令才建立並更新根目錄的 <code>dist/</code>。
+  建置失敗會保留上次成功的網站，請依工作診斷修正後再試。檢查 4322 的結果後，交付完整 dist 目錄即可。
+  未來日期不等於排程發布，是否公開仍由文章狀態決定。
+</p>
+
+<h2 id="stable-anchors">保留穩定的章節與相關連結</h2>
+<p>
+  本段的識別名稱是 <code>stable-anchors</code>，其他文章可以直接連到這個位置。
+  使用清楚的章節名稱，讀者就能透過目錄或 <a href="#article-structure">頁內連結</a>回到需要的說明。
+  修改分類或網址名稱會改變公開 URL，原有連結需要一起修正。
+</p>
+<p>
+  預期完成後，你會有一篇能在 4322 直接閱讀、包含章節目錄的文章；
+  在「網站更新與工作」也能看到成功的工作紀錄。首頁與文章列表依已保存的設定更新，
+  不需要為這篇文章新增程式入口。
+</p>
+
+<h2 id="common-questions">遇到問題時先看這裡</h2>
+<dl>
+  <dt>啟動還沒完成，或網址無法開啟？</dt>
+  <dd>Docker 使用者先查看 <code>docker compose logs --tail=80 app</code>；原生使用者查看執行 pnpm start 的終端。依錯誤處理工具、權限、內容或埠占用問題，不要重複啟動另一組服務。</dd>
+  <dt>即時預覽有內容，但 4321 找不到文章？</dt>
+  <dd>確認內容已保存且已發布。草稿只在工作室預覽，未保存的編輯也不會出現在來源預覽。</dd>
+  <dt>4321 是新版，4322 還是舊版？</dt>
+  <dd>確認「更新網站」已成功。重新啟動已有網站的容器，不會自動發布較新的來源。</dd>
+  <dt>修改後無法保存？</dt>
+  <dd>先看欄位診斷；若正處於 IDE 模式，完成檔案編輯並切回 Studio 模式，再重新載入文章。</dd>
+</dl>
+<p>
+  接著閱讀 <a href="/notes/image-content/">圖片、尺寸與替代文字</a>，
+  或前往 <a href="/articles/">文章總覽</a>依主題尋找其他指南。
+</p>
+
+<h2 id="summary-and-related">設定摘要與延伸閱讀</h2>
+<p>「文章摘要」用於首頁、列表、搜尋、RSS 及文章導言；SEO 的 Meta Description 則提供搜尋與分享資訊。摘要留白時，系統會依內容與 SEO 繼承規則取得描述。這篇文章刻意填入不同的摘要與 Meta Description，方便比較。</p>
+<p>在「延伸閱讀」填寫區塊標題，選取其他已發布文章並調整順序。本篇頁尾會依設定顯示兩篇指南。移除全部選取文章後，整個區塊就不顯示；被其他文章引用時，刪除會提示先移除引用。</p>
+<p>Tag 可在文章設定搜尋、多選及建立。建立全站 Tag 與保存文章是兩個動作：完成 Tag 後，仍要保存目前文章並更新網站。</p>

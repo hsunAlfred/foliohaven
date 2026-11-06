@@ -1,0 +1,25 @@
+---
+import { ArticlePage } from '@foliohaven/ui';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { loadArticlePage, loadRenderContext } from '../lib/server/context.js';
+import type { GetStaticPaths } from 'astro';
+export const getStaticPaths = (async () => {
+  const context = await loadRenderContext();
+  return context.articles.map((article) => ({
+    params: { article: article.url.slice(1, -1) },
+    props: { articleId: article.id },
+  }));
+}) satisfies GetStaticPaths;
+interface Props {
+  articleId: string;
+}
+const model = await loadArticlePage(Astro.props.articleId);
+---
+
+<BaseLayout site={model.site} seo={model.seo} currentPath={model.url}>
+  <ArticlePage article={model} />
+  <script>
+    import '../scripts/reading-controller.js';
+    import '../scripts/article-enhancements.js';
+  </script>
+</BaseLayout>

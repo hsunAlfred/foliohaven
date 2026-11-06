@@ -1,0 +1,27 @@
+# Existing documentation keeps its reviewed formatting.
+docs/**
+README.md
+AGENTS.md
+
+# Author HTML is preserved verbatim rather than reformatted by tooling.
+content/articles/**/content.html
+tests/fixtures/samples/reference/content/articles/**/content.html
+media/**
+
+# Dependencies, generated output, private jobs, and reports.
+**/node_modules/**
+**/dist/**
+**/.astro/**
+**/.vite/**
+**/.wrangler/**
+**/coverage/**
+.alfred/**
+pnpm-lock.yaml
+
+# Local Cloudflare targets and credentials are edited by the site owner.
+/cloudflare.config.json
+/.env.cloudflare
+
+# Existing Codex migration tooling has its own Python and Bash checks.
+.devcontainer/**/*.py
+.devcontainer/**/*.sh

@@ -1,0 +1,31 @@
+{
+  "name": "@foliohaven/core",
+  "version": "0.3.1",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "26.12.1"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.node.json",
+    "typecheck": "tsc -b tsconfig.node.json"
+  },
+  "dependencies": {
+    "parse5": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  }
+}

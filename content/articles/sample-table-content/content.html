@@ -1,0 +1,141 @@
+<p>
+  分類與 Tag 讓讀者找到相關主題，分頁控制列表長度，搜尋則適合已經知道關鍵字的讀者。
+  SEO 設定管理搜尋與分享資訊。本篇把這些入口串成完整流程，同時展示表格、有序清單，
+  以及仍可公開閱讀的 noindex 文章。
+</p>
+<p>
+  首次建站可先用這篇檢查共用版型的表格與清單；日常則從 Studio 調整分類、Tag 與 SEO。
+  不論原生環境或 Docker，都可以使用相同介面，也可在 IDE 模式由編輯器或 AI 依資料格式修改。
+</p>
+
+<h2 id="categories-and-tags">先決定分類，再選擇需要的 Tag</h2>
+<p>
+  每篇文章只有一個分類，可以設定零個或多個 Tag。本網站以「筆記」整理啟動、圖片與搜尋的指南，
+  以「工具」整理影片及維護操作；「範例」、「工作流程」、「媒體」則用來串起跨分類的主題。
+</p>
+<ol>
+  <li>在 Studio 的「分類與 Tag」建立需要的項目，或點擊既有項目修改名稱與描述。</li>
+  <li>回到文章設定，選擇一個分類，再依內容選擇適當 Tag。</li>
+  <li>保存文章並更新網站，點文章上的分類或 Tag，確認能找到相關內容。</li>
+</ol>
+<p>
+  如果只想把顯示名稱改得清楚，直接編輯名稱即可。只有要改變連結中的網址名稱時，
+  才使用「修改分類或 Tag 網址」：選項目、填新網址名稱、查看變更影響，再確認變更。
+  系統會同步受影響的文章屬性、子分類及導覽；正文原有的連結仍需要由作者修正，也不會自動建立轉址。
+</p>
+
+<h2 id="pagination-and-search">實際查看分頁與搜尋</h2>
+<p>
+  本 release 的分類、Tag 及文章總覽每頁顯示兩篇文章。
+  「筆記」有三篇，因此 <a href="/category/notes/">筆記分類</a>會有兩頁；
+  「工具」有兩篇，<a href="/category/tools/">工具分類</a>目前是一頁。
+  五篇文章的總覽可從 <a href="/articles/">文章總覽</a>查看並換頁。
+</p>
+<ol>
+  <li>先開啟筆記分類，點「下一頁」，確認頁面仍顯示相同分類，文章內容已換成後續項目。</li>
+  <li>回到文章總覽，在「關鍵字」輸入「圖片」並搜尋，查看相關文章。</li>
+  <li>嘗試輸入分類、Tag 或摘要中的文字，再清空關鍵字查看全部文章。</li>
+  <li>使用瀏覽器上一頁與下一頁，確認能返回剛才的搜尋狀態。</li>
+</ol>
+<p>
+  搜尋使用公開搜尋資料，需要瀏覽器 JavaScript。文章本身及分類頁的主要內容都已在完整 HTML 中，
+  即使沒有啟用搜尋互動，讀者仍可透過導覽與分類連結閱讀文章。新增文章後須成功更新網站，
+  新內容才會加入 4322 使用的搜尋資料。
+</p>
+
+<h2 id="comparison-table">以表格確認 SEO 與分享資訊</h2>
+<table>
+  <caption>文章 SEO 欄位與未覆寫時的行為</caption>
+  <thead>
+    <tr>
+      <th scope="col">欄位</th>
+      <th scope="col">用途</th>
+      <th scope="col">未覆寫時的行為</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">SEO Title</th>
+      <td>搜尋結果與瀏覽器使用的標題。</td>
+      <td>依文章標題與全站 SEO Title Template 組成。</td>
+    </tr>
+    <tr>
+      <th scope="row">Meta Description</th>
+      <td>提供文章的搜尋摘要。</td>
+      <td>已發布文章必須自行填寫，不能省略。</td>
+    </tr>
+    <tr>
+      <th scope="row">OG Image</th>
+      <td>提供社群分享使用的圖片。</td>
+      <td>優先使用精選圖片，再使用全站 Default Social Image。</td>
+    </tr>
+    <tr>
+      <th scope="row">Indexing</th>
+      <td>表示是否允許搜尋引擎索引。</td>
+      <td>依全站 Default Indexing；可在單篇明確覆寫。</td>
+    </tr>
+  </tbody>
+</table>
+<p>
+  選「使用全站預設值」時，工作室會顯示目前實際套用的內容與圖片來源。
+  繼承設定不會被另存成固定覆寫；需要每篇不同的內容時，再明確設定該欄位。
+  OG Image 的選擇流程請參考 <a href="/notes/image-content/#sharing-image">分享圖指南</a>。
+</p>
+
+<h3 id="editing-checklist">依序檢查發布資訊</h3>
+<ol>
+  <li>確認分類、網址名稱及 Tag 能清楚表示文章主題。</li>
+  <li>撰寫文章自己的 Meta Description，核對 SEO Title 與分享圖片的實際預設值。</li>
+  <li>依內容決定 Indexing，確認日期、連結、章節與媒體皆有效。</li>
+  <li>保存並更新網站，在 4322 查看文章、分類、搜尋及網頁原始碼。</li>
+</ol>
+
+<h2 id="noindex-example">公開閱讀與搜尋收錄設定</h2>
+<p>
+  本篇明確設定 <code>seo.index=false</code>。它仍然是已發布文章，
+  可以從首頁、分類、Tag、搜尋及 RSS 閱讀，但頁面會輸出 <code>noindex,follow</code>，
+  並從 Sitemap 排除。這項設定表達不索引的意願，不提供密碼或存取限制。
+</p>
+<table>
+  <caption>已發布、noindex 與草稿的差別</caption>
+  <thead><tr><th scope="col">狀態</th><th scope="col">公開閱讀與列表</th><th scope="col">RSS／站內搜尋</th><th scope="col">Sitemap</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">已發布，允許索引</th><td>包含</td><td>包含</td><td>包含</td></tr>
+    <tr><th scope="row">已發布，不允許索引</th><td>包含</td><td>包含</td><td>排除</td></tr>
+    <tr><th scope="row">草稿</th><td>排除</td><td>排除</td><td>排除</td></tr>
+  </tbody>
+</table>
+
+<h2 id="seo-output">公開網站會產生哪些資訊</h2>
+<p>
+  網站依保存的設定產生 title、description、canonical、robots、Open Graph、Twitter Card 及適用的結構化資料。
+  文章頁還包含文章與麵包屑資訊。這些內容由共用規則產生，新增文章不需要逐篇編輯網頁 head。
+</p>
+<p>
+  你也可以查看 <a href="/rss.xml">RSS</a>、<a href="/sitemap-index.xml">Sitemap 索引</a>
+  與 <a href="/robots.txt">robots.txt</a>。Sitemap 索引再指向實際網址清單，
+  正式網站網址由全站設定決定；這個通用範例保留 <code>https://example.invalid/</code>，使用者應在公開前換成自己的網址。
+</p>
+
+<h2 id="taxonomy-questions">常見問題</h2>
+<dl>
+  <dt>改了分類名稱，連結會一起改嗎？</dt>
+  <dd>顯示名稱與網址名稱各自設定。只有明確變更網址名稱時，公開 URL 才會改變；完成後檢查正文連結並更新網站。</dd>
+  <dt>為什麼這篇 noindex 文章還搜得到？</dt>
+  <dd>站內搜尋使用網站自己的公開文章資料。noindex 控制搜尋引擎索引意願，不會把已發布文章從站內搜尋或 RSS 移除。</dd>
+  <dt>搜尋沒有結果，或沒有出現新增文章？</dt>
+  <dd>先確認文章已發布、網站更新成功，搜尋文字也確實出現在標題、分類、Tag 或摘要中；再依畫面的搜尋載入提示重試。</dd>
+  <dt>把文章改成草稿後，4322 還能開啟？</dt>
+  <dd>撤回保存後還要成功更新網站，既有公開頁面才會移除；工作失敗時保留舊網站。</dd>
+</dl>
+<p>
+  最後閱讀 <a href="/tools/local-editing/">固定頁面、文章版型與 IDE 維護</a>，
+  或到 <a href="/tag/workflow/">工作流程標籤</a>查看相關指南。
+</p>
+
+<h2 id="combined-search">組合搜尋、分類與 Tag</h2>
+<p>文章總覽可同時填入關鍵字並勾選分類與 Tag。關鍵字先正規化為小寫，再依空格分詞，符合任一詞即可；命中較多詞的文章優先。同一組分類或 Tag 符合其中一項即可，不同組之間則需同時符合。</p>
+<p>試著在文章總覽輸入「圖片 影片」，勾選媒體 Tag，再切換分類或翻頁。網址會保留條件，瀏覽器返回與前進也會恢復對應結果。分類與 Tag 的總覽提供描述、文章數及各主題入口。</p>
+<h2 id="page-type-seo">逐欄理解八種頁型 SEO</h2>
+<p>全站設定可分別調整首頁、文章、文章總覽／搜尋、分類總覽、分類頁、Tag 總覽、Tag 頁及 404。每個欄位依單筆覆寫、頁型設定、全域設定的順序判斷；只改某一欄，不會讓其他欄一起停止繼承。</p>
+<p>Indexing 為 Noindex 時仍可公開閱讀。零篇文章的分類或 Tag，以及 404、草稿預覽等情境另有固定的索引規則，請以介面說明與實際成功網站輸出一起確認。</p>

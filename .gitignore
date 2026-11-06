@@ -1,0 +1,40 @@
+# Dependencies, build output, and local caches.
+node_modules/
+dist/
+coverage/
+.astro/
+.vite/
+.pnpm-store/
+.wrangler/
+*.tsbuildinfo
+.alfred/
+test-results/
+playwright-report/
+__pycache__/
+*.pyc
+
+# Local logs and temporary files.
+*.log
+*.pid
+.devcontainer-write-check.*
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Local environment files and credentials. Keep safe example files trackable.
+.env
+.env.*
+!.env.example
+!/.env.cloudflare.example
+/cloudflare.config.json
+*.pem
+*.key
+.ssh/
+
+# Machine-specific editor state; shared settings remain trackable.
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json

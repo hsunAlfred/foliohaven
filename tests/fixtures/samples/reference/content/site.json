@@ -1,0 +1,34 @@
+{
+  "siteName": "Foliohaven",
+  "siteDescription": "以 HTML 與 JSON 維護內容的靜態部落格。",
+  "siteUrl": "https://example.invalid/",
+  "language": "zh-Hant",
+  "timeZone": "Asia/Taipei",
+  "author": { "name": "Alfred", "url": null },
+  "navigation": [
+    { "label": "首頁", "href": "/" },
+    { "label": "筆記", "href": "/category/notes/" },
+    { "label": "工具", "href": "/category/tools/" },
+    { "label": "文章總覽", "href": "/articles/" }
+  ],
+  "defaultSEO": {
+    "titleTemplate": "{title} | {siteName}",
+    "description": "以 HTML 與 JSON 維護內容的靜態部落格。",
+    "index": true
+  },
+  "pagination": { "category": 2, "tag": 2, "articles": 2 },
+  "home": {
+    "featuredArticleIds": ["sample-article-basics", "sample-image-content"],
+    "latestCount": 5
+  },
+  "rss": {
+    "title": "Foliohaven",
+    "description": "以 HTML 與 JSON 維護內容的靜態部落格。",
+    "maxItems": 100
+  },
+  "social": {
+    "defaultImage": "/media/d65927b5-381f-4d2e-90d8-f6a8c5e38e57/image.webp",
+    "twitterSite": null
+  },
+  "googleSiteVerification": null
+}

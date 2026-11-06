@@ -1,0 +1,10 @@
+---
+import { NotFoundPage } from '@foliohaven/ui';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { loadNotFoundPage } from '../lib/server/context.js';
+const { site, seo } = await loadNotFoundPage();
+---
+
+<BaseLayout site={site} seo={seo} currentPath="/404.html">
+  <NotFoundPage site={site} />
+</BaseLayout>

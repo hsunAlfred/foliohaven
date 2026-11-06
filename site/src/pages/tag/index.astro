@@ -1,0 +1,15 @@
+---
+import { TaxonomyOverviewPage } from '@foliohaven/ui';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { loadTaxonomyOverviewPage } from '../../lib/server/context.js';
+const model = await loadTaxonomyOverviewPage('tag-index');
+---
+
+<BaseLayout site={model.site} seo={model.seo} currentPath={model.url}>
+  <TaxonomyOverviewPage
+    kind="tag"
+    description={model.seo.description}
+    categories={model.categories}
+    tags={model.tags}
+  />
+</BaseLayout>

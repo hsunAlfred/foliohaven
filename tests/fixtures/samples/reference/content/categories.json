@@ -1,0 +1,24 @@
+[
+  {
+    "path": "notes",
+    "name": "筆記",
+    "description": "文章結構、圖片與表格的寫作範例。",
+    "seo": {
+      "title": null,
+      "description": null,
+      "index": null,
+      "ogImage": null
+    }
+  },
+  {
+    "path": "tools",
+    "name": "工具",
+    "description": "本機編輯與影片使用的操作範例。",
+    "seo": {
+      "title": null,
+      "description": null,
+      "index": null,
+      "ogImage": null
+    }
+  }
+]

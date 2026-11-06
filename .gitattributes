@@ -1,0 +1,27 @@
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.mp4 binary
+*.webm binary
+*.mp3 binary
+*.ogg binary
+
+# Keep producer work records in Git, outside source archives.
+# Use pnpm release:package for the public file list and neutral Dev Container.
+docs/development export-ignore
+.vscode export-ignore
+
+# Site-specific Cloudflare settings and credentials are not release inputs.
+/cloudflare.config.json export-ignore
+/.env.cloudflare export-ignore
+.wrangler export-ignore
+**/.wrangler export-ignore

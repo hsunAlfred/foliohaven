@@ -1,0 +1,39 @@
+{
+  "name": "@foliohaven/site",
+  "version": "0.3.1",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "26.12.1"
+  },
+  "scripts": {
+    "dev": "pnpm --dir .. dev:site",
+    "render": "astro build",
+    "typecheck": "astro check --tsconfig tsconfig.json",
+    "build:registry": "tsc -b tsconfig.registry.json"
+  },
+  "dependencies": {
+    "@foliohaven/core": "workspace:*",
+    "@foliohaven/ui": "workspace:*",
+    "@astrojs/react": "catalog:",
+    "@astrojs/rss": "catalog:",
+    "@astrojs/sitemap": "catalog:",
+    "astro": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@astrojs/check": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:"
+  },
+  "exports": {
+    "./registry": {
+      "types": "./dist/registry/fixed-pages.d.ts",
+      "import": "./dist/registry/fixed-pages.js"
+    }
+  }
+}

@@ -1,0 +1,134 @@
+---
+import {
+  serializeJsonLd,
+  type SeoViewModel,
+  type SiteViewModel,
+} from '@foliohaven/core';
+interface Props {
+  seo: SeoViewModel;
+  favicon?: SiteViewModel['favicon'];
+  iconSet?: SiteViewModel['iconSet'];
+}
+const { seo, favicon = null, iconSet } = Astro.props;
+const faviconType = favicon?.endsWith('.png')
+  ? 'image/png'
+  : favicon?.endsWith('.svg')
+    ? 'image/svg+xml'
+    : favicon?.endsWith('.ico')
+      ? 'image/x-icon'
+      : 'image/webp';
+const legacyIcons =
+  favicon === null
+    ? []
+    : [
+        {
+          href: favicon,
+          type: faviconType,
+          sizes: favicon.endsWith('/favicon.png')
+            ? '32x32'
+            : favicon.endsWith('.svg')
+              ? 'any'
+              : undefined,
+        },
+      ];
+const icons = iconSet?.icons ?? legacyIcons;
+const themeLight = iconSet?.themeLight ?? null;
+const themeDark = iconSet?.themeDark ?? null;
+---
+
+<title>{seo.title}</title>
+{icons.map((icon) => (
+  <link rel="icon" href={icon.href} type={icon.type} sizes={icon.sizes} />
+))}
+{iconSet?.appleTouchIcon && (
+  <link rel="apple-touch-icon" href={iconSet.appleTouchIcon} sizes="180x180" />
+)}
+{iconSet?.maskIcon && (
+  <link
+    rel="mask-icon"
+    href={iconSet.maskIcon.href}
+    color={iconSet.maskIcon.color}
+  />
+)}
+{iconSet?.manifest && <link rel="manifest" href={iconSet.manifest.href} />}
+{themeLight !== null && (
+  <meta
+    name="theme-color"
+    content={themeLight}
+    media="(prefers-color-scheme: light)"
+    data-site-theme-color="light"
+  />
+)}
+{themeDark !== null && (
+  <meta
+    name="theme-color"
+    content={themeDark}
+    media="(prefers-color-scheme: dark)"
+    data-site-theme-color="dark"
+  />
+)}
+{(themeLight !== null || themeDark !== null) && <script
+  is:inline
+  data-site-theme-colors
+>
+  (() => {
+    const root = document.documentElement;
+    const metas = document.querySelectorAll('meta[data-site-theme-color]');
+    const sync = () => {
+      const theme = root.dataset.theme;
+      if (theme !== 'light' && theme !== 'dark') return;
+      for (const meta of metas) {
+        meta.setAttribute(
+          'media',
+          meta.getAttribute('data-site-theme-color') === theme
+            ? 'all'
+            : 'not all',
+        );
+      }
+    };
+    sync();
+    new MutationObserver(sync).observe(root, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+  })();
+</script>}
+<meta name="description" content={seo.description} />
+<meta name="robots" content={seo.robots} />
+{seo.canonical !== null && <link rel="canonical" href={seo.canonical} />}
+<meta property="og:type" content={seo.openGraph.type} />
+<meta property="og:title" content={seo.openGraph.title} />
+<meta property="og:description" content={seo.openGraph.description} />
+<meta property="og:site_name" content={seo.openGraph.siteName} />
+<meta property="og:locale" content={seo.openGraph.locale} />
+{seo.openGraph.url !== null && (
+  <meta property="og:url" content={seo.openGraph.url} />
+)}
+{seo.openGraph.image !== null && (
+  <meta property="og:image" content={seo.openGraph.image} />
+)}
+<meta name="twitter:card" content={seo.twitter.card} />
+<meta name="twitter:title" content={seo.twitter.title} />
+<meta name="twitter:description" content={seo.twitter.description} />
+{seo.twitter.image !== null && (
+  <meta name="twitter:image" content={seo.twitter.image} />
+)}
+{seo.twitter.site !== null && (
+  <meta name="twitter:site" content={seo.twitter.site} />
+)}
+{seo.googleSiteVerification !== null && (
+  <meta name="google-site-verification" content={seo.googleSiteVerification} />
+)}
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title="RSS"
+  href={seo.rssUrl}
+/>
+{seo.jsonLd.length > 0 && (
+  <script
+    is:inline
+    type="application/ld+json"
+    set:html={serializeJsonLd(seo.jsonLd)}
+  />
+)}

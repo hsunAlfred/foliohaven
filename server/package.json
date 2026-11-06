@@ -1,0 +1,38 @@
+{
+  "name": "@foliohaven/server",
+  "version": "0.3.1",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "26.12.1"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "pnpm --dir .. dev:server",
+    "build": "tsc -b",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@foliohaven/core": "workspace:*",
+    "@foliohaven/site": "workspace:*",
+    "@foliohaven/ui": "workspace:*",
+    "busboy": "catalog:",
+    "fast-xml-parser": "catalog:",
+    "parse5": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "sharp": "catalog:"
+  },
+  "devDependencies": {
+    "@types/busboy": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:"
+  }
+}

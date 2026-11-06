@@ -1,0 +1,60 @@
+{
+  "siteName": "Foliohaven",
+  "siteDescription": "使用中性範例學習架站、Studio 編輯、摘要與 SEO、圖片影片、分類搜尋及安全更新。先完成頁面與共用版型，再開始自己的文章。",
+  "siteUrl": "https://example.invalid/",
+  "language": "zh-Hant",
+  "timeZone": "Asia/Taipei",
+  "author": {
+    "name": "範例作者",
+    "url": null
+  },
+  "navigation": [
+    {
+      "label": "首頁",
+      "href": "/"
+    },
+    {
+      "label": "文章總覽",
+      "href": "/articles/"
+    },
+    {
+      "label": "分類",
+      "href": "/category/"
+    },
+    {
+      "label": "Tag",
+      "href": "/tag/"
+    }
+  ],
+  "defaultSEO": {
+    "titleTemplate": "{title} | {siteName}",
+    "description": "從原生或 Docker 環境、固定頁面與文章版型，到 Studio／IDE 文章管理及靜態網站輸出的完整操作指南。",
+    "index": true
+  },
+  "pagination": {
+    "category": 2,
+    "tag": 2,
+    "articles": 2
+  },
+  "home": {
+    "featuredArticleIds": [
+      "sample-article-basics",
+      "sample-image-content",
+      "sample-video-content",
+      "sample-table-content",
+      "sample-local-editing"
+    ],
+    "latestCount": 5,
+    "featuredCaption": "從這裡開始"
+  },
+  "rss": {
+    "title": "Foliohaven 使用指南",
+    "description": "五篇指南介紹首次建站、文章編輯、圖片影片、分類搜尋，以及自訂網站的日常維護與版本更新。",
+    "maxItems": 100
+  },
+  "social": {
+    "defaultImage": "/media/d65927b5-381f-4d2e-90d8-f6a8c5e38e57/image.webp",
+    "twitterSite": null
+  },
+  "googleSiteVerification": null
+}

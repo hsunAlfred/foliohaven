@@ -1,0 +1,130 @@
+<p>
+  影片適合呈現操作過程、動作與時間變化。工作室保留你上傳的來源，再產生網站使用的影片及封面；
+  文章只需引用媒體庫提供的公開路徑。本篇以一段兩秒、無聲的合成影片，示範完整操作與閱讀效果。
+</p>
+<p>
+  先完成網站頁面與共用文章樣式，再依下列步驟處理自己的影片；原生環境與 Docker 的 Studio 操作相同。
+  影片不需要額外建立頁面程式，只要保存引用並成功更新網站即可。
+</p>
+
+<h2 id="upload-video">上傳與處理影片</h2>
+<ol>
+  <li>在 Studio「媒體庫」按「上傳媒體」，選擇工作室支援的影片來源，檢查本機預覽並填入顯示名稱。</li>
+  <li>上傳成功後，點擊該影片卡片，開啟「媒體設定與引用」。確認尺寸、片長及來源狀態。</li>
+  <li>需要指定播放前的畫面時，先設定「Poster 秒數」，按「保存媒體設定」。</li>
+  <li>按「處理媒體」，等待影片與封面完成；可從工作詳細資料查看階段、進度或錯誤。</li>
+  <li>完成後先播放預覽，再複製引用區提供的 HTML 到文章正文。</li>
+</ol>
+<p>
+  網站的影片格式為 WebM，封面是 WebP 圖片。處理時間與片長、畫面大小及主機資源有關；
+  來源與設定變更後需要重新處理，不應把舊的畫面當成新結果。
+</p>
+
+<h3 id="poster-time">挑選能代表內容的封面</h3>
+<p>
+  「Poster 秒數」表示從影片的哪個時間點取一格畫面作為封面，單位是秒，例如 <code>0.5</code>。
+  留白時工作室會直接顯示目前採用的預設時間。設定值必須落在影片可用範圍內，實際畫面依可用影格取得。
+  修改後先保存設定，再按「處理媒體」，最後檢查新的封面。
+</p>
+<p>
+  封面讓讀者在播放前理解影片主題，應避免全黑、過場或容易誤解的影格。
+  如果影片的關鍵資訊無法從封面看懂，請在附近加上文字說明。
+</p>
+
+<h2 id="short-video">實際播放兩秒示範影片</h2>
+<figure>
+  <video
+    controls
+    preload="metadata"
+    playsinline
+    width="640"
+    height="360"
+    poster="/media/68789bc2-e491-4dbe-81de-f1a42adb7234/poster.webp"
+  >
+    <source
+      src="/media/68789bc2-e491-4dbe-81de-f1a42adb7234/video.webm"
+      type="video/webm"
+    />
+    您的瀏覽器未支援這個播放格式，可<a
+      href="/media/68789bc2-e491-4dbe-81de-f1a42adb7234/video.webm"
+      >開啟 WebM 影片</a
+    >。
+  </video>
+  <figcaption>兩秒、640 × 360、無聲的合成色彩影像；封面擷取時間為 0.5 秒。</figcaption>
+</figure>
+<h3 id="video-description">影片內容說明</h3>
+<p>
+  畫面包含彩色色塊、測試刻度與持續移動的圖形，讓你比較靜態封面和實際播放的差異。
+  這段影片沒有對話或其他聲音資訊；讀者可以自行按播放、暫停、拖動進度，或在裝置支援時切換全螢幕。
+</p>
+
+<h2 id="video-html">把引用放入文章正文</h2>
+<p>
+  下列 HTML 展示本篇實際使用的影片結構。新增自己的影片時，請從媒體庫複製該影片的路徑，
+  並保留正確尺寸、MIME 與封面；不要把示範 UUID 當成你自己的素材。
+</p>
+<pre><code class="language-html">&lt;figure&gt;
+  &lt;video
+    controls
+    preload="metadata"
+    playsinline
+    width="640"
+    height="360"
+    poster="/media/68789bc2-e491-4dbe-81de-f1a42adb7234/poster.webp"
+  &gt;
+    &lt;source
+      src="/media/68789bc2-e491-4dbe-81de-f1a42adb7234/video.webm"
+      type="video/webm"
+    /&gt;
+  &lt;/video&gt;
+  &lt;figcaption&gt;簡短說明影片內容與讀者應注意的地方。&lt;/figcaption&gt;
+&lt;/figure&gt;</code></pre>
+<table>
+  <caption>影片常用設定</caption>
+  <thead><tr><th scope="col">設定</th><th scope="col">用途</th></tr></thead>
+  <tbody>
+    <tr><th scope="row"><code>controls</code></th><td>提供播放、暫停及進度等瀏覽器控制介面。</td></tr>
+    <tr><th scope="row"><code>preload="metadata"</code></th><td>先讀取片長及尺寸等資訊，完整下載仍由瀏覽器與播放操作決定。</td></tr>
+    <tr><th scope="row"><code>playsinline</code></th><td>讓支援的手機瀏覽器可以在頁面內播放。</td></tr>
+    <tr><th scope="row"><code>poster</code></th><td>指定播放前的封面圖片。</td></tr>
+  </tbody>
+</table>
+<p>
+  影片旁應保留足夠的文字資訊，讓不便播放的讀者也能理解重點。
+  若自己的影片包含對話或操作細節，請在正文提供文字摘要或逐步說明。
+</p>
+
+<h2 id="without-tags">文章也可以沒有標籤</h2>
+<p>
+  這篇文章歸在工具分類，沒有設定額外 Tag，展示只有分類也能正常發布的情況。
+  分類仍提供明確入口，讀者可從 <a href="/category/tools/">工具分類</a>找到本文。
+  其他文章可依主題選擇既有 Tag，無須為每篇文章建立新的標籤。
+</p>
+
+<h2 id="verify-video">保存後確認公開播放</h2>
+<ol>
+  <li>在即時預覽切換桌機與手機，確認封面比例、文字及播放控制沒有超出閱讀區。</li>
+  <li>保存文章並更新網站，成功後在 4322 開啟這篇文章。</li>
+  <li>確認播放前能看到封面，按播放後畫面正常，暫停與進度操作也能使用。</li>
+  <li>若剛改過封面，確認媒體已重新處理，並且網站更新工作使用的是最新保存的內容。</li>
+</ol>
+<p>
+  預期結果是同一篇靜態文章中具有文字、封面與可播放影片；讀者不需要進入 Studio，
+  也不需要另外取得原始影片。正式輸出的媒體由網站建置流程一併放入 <code>dist/</code>。
+</p>
+
+<h2 id="video-questions">常見問題</h2>
+<dl>
+  <dt>影片卡片有封面，但正文不能播放？</dt>
+  <dd>確認引用的是處理成功的 WebM 路徑，source 的 type 為 <code>video/webm</code>，且網站更新已完成；封面本身只是圖片。</dd>
+  <dt>改了 Poster 秒數，畫面沒有變？</dt>
+  <dd>依序保存媒體設定、重新處理媒體，再更新網站；如果也修改了文章引用，先保存文章。只改輸入框不會產生新封面。</dd>
+  <dt>處理很久或工作失敗？</dt>
+  <dd>開啟工作詳細資料，依安全診斷檢查格式、大小、片長或工具問題。失敗、取消或中斷可在確認來源後重試，仍在執行時不要重複送出同一工作。</dd>
+  <dt>可以把影片設為文章精選圖片嗎？</dt>
+  <dd>精選圖片只接受圖片。影片封面可用於 OG Image 或全站分享圖；正文影片則用 video 與 source 引用。</dd>
+</dl>
+<p>
+  接著閱讀 <a href="/notes/table-content/">分類、搜尋與 SEO</a>，
+  或查看 <a href="/notes/image-content/#responsive-image">圖片的多尺寸與文字說明</a>。
+</p>

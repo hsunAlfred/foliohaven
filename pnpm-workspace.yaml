@@ -1,0 +1,61 @@
+packages:
+  - packages/core
+  - packages/ui
+  - site
+  - studio
+  - server
+
+engineStrict: true
+strictPeerDependencies: true
+strictDepBuilds: true
+saveExact: true
+pmOnFail: error
+verifyDepsBeforeRun: error
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+storeDir: ${HOME}/.local/share/pnpm/store
+allowBuilds:
+  esbuild@0.28.2: true
+  workerd@1.20261019.1: true
+
+catalog:
+  '@aws-sdk/client-s3': 3.1156.0
+  '@astrojs/check': 0.9.12
+  '@astrojs/react': 7.1.1
+  '@astrojs/rss': 4.0.19
+  '@astrojs/sitemap': 3.7.4
+  '@codemirror/commands': 6.11.1
+  '@codemirror/lang-html': 6.4.12
+  '@codemirror/language': 6.13.1
+  '@codemirror/state': 6.7.6
+  '@codemirror/view': 6.43.15
+  '@eslint/js': 10.0.1
+  '@playwright/test': 1.64.1
+  '@types/busboy': 1.5.5
+  '@types/node': 26.6.5
+  '@types/react': 19.3.0
+  '@types/react-dom': 19.3.0
+  '@vitejs/plugin-react': 6.1.2
+  astro: 7.4.2
+  busboy: 1.6.0
+  concurrently: 10.0.6
+  eslint: 10.13.0
+  eslint-config-prettier: 10.1.8
+  eslint-plugin-astro: 3.2.1
+  eslint-plugin-react-hooks: 7.1.1
+  eslint-plugin-react-refresh: 0.5.7
+  fast-xml-parser: 5.11.2
+  globals: 17.13.0
+  parse5: 8.0.1
+  prettier: 3.9.10
+  prettier-plugin-astro: 1.1.1
+  react: 19.3.1
+  react-dom: 19.3.1
+  sharp: 0.35.5
+  tsx: 4.23.15
+  typescript: 6.0.3
+  typescript-eslint: 8.72.0
+  vite: 8.3.5
+  vitest: 5.0.5
+  wrangler: 4.152.0
+  zod: 4.6.7

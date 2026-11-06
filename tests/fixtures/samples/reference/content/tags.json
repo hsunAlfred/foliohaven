@@ -1,0 +1,35 @@
+[
+  {
+    "slug": "example",
+    "name": "範例",
+    "description": "跨分類的基本文章範例。",
+    "seo": {
+      "title": null,
+      "description": null,
+      "index": null,
+      "ogImage": null
+    }
+  },
+  {
+    "slug": "workflow",
+    "name": "工作流程",
+    "description": "編輯、整理與檢查內容的範例。",
+    "seo": {
+      "title": null,
+      "description": null,
+      "index": null,
+      "ogImage": null
+    }
+  },
+  {
+    "slug": "media",
+    "name": "媒體",
+    "description": "圖片引用、尺寸與替代文字的範例。",
+    "seo": {
+      "title": null,
+      "description": null,
+      "index": null,
+      "ogImage": null
+    }
+  }
+]

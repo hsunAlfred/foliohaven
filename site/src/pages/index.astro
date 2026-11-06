@@ -1,0 +1,10 @@
+---
+import { HomePage } from '@foliohaven/ui';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { loadHomePage } from '../lib/server/context.js';
+const model = await loadHomePage();
+---
+
+<BaseLayout site={model.site} seo={model.seo} currentPath="/">
+  <HomePage model={model} />
+</BaseLayout>

@@ -1,0 +1,23 @@
+---
+import { CategoryPage } from '@foliohaven/ui';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { loadListPage, loadRenderContext } from '../../lib/server/context.js';
+import type { GetStaticPaths } from 'astro';
+export const getStaticPaths = (async () => {
+  const context = await loadRenderContext();
+  return context.lists
+    .filter((page) => page.kind === 'category')
+    .map((page) => ({
+      params: { category: page.url.slice('/category/'.length, -1) },
+      props: { url: page.url },
+    }));
+}) satisfies GetStaticPaths;
+interface Props {
+  url: string;
+}
+const model = await loadListPage(Astro.props.url);
+---
+
+<BaseLayout site={model.site} seo={model.seo} currentPath={model.url}>
+  <CategoryPage model={model} />
+</BaseLayout>

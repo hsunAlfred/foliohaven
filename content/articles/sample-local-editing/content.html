@@ -1,0 +1,210 @@
+<p>
+  建站時先用原始碼完成首頁、FAQ、About 等固定頁面與文章共用版型，再使用 Studio 管理文章、媒體與網站設定。
+  需要批次調整或 AI 協作時，也可以直接編輯檔案。本篇介紹環境、程式與資料的入口，
+  以及日常檢查、備份、復原和版本更新；不論選擇原生環境或 Docker，都能完成同樣的工作。
+</p>
+
+<h2 id="working-environment">在原生環境或 Docker 中編輯</h2>
+<p>
+  先依 <a href="/notes/article-basics/#start-workspace">啟動指南</a>準備環境。
+  原生使用者可以直接以編輯器或 AI 開啟專案；Docker 使用者也能編輯主機上同一份專案，
+  或在專案根目錄執行以下命令進入容器，使用其中的終端、編輯器與測試工具：
+</p>
+<pre><code class="language-bash">docker compose exec app bash</code></pre>
+<p>
+  進入容器後，<code>pnpm</code> 命令不再加 Docker 前綴；輸入 <code>exit</code> 只會離開這個終端，不會停止網站服務。
+  容器內的專案目錄與主機相連，修改會保存在主機。不需要重新執行 pnpm start，也不要另開一組服務。
+  先讓 AI 閱讀根目錄的 AGENTS.md 與 README.md，再說明網站用途、希望修改的頁面或文章、
+  必須保留的網址與內容，讓它依對應流程修改並執行檢查；不限定 AI 產品或編輯器。
+</p>
+
+<h2 id="switch-editing-mode">先切換模式，再編輯檔案</h2>
+<ol>
+  <li>在 Studio 保存目前編輯，從頂部「工作區」選單切換 IDE 模式。</li>
+  <li>使用熟悉的編輯器或 AI 修改專案檔案。文章及網站設定是 HTML／JSON，頁面及共用版型則依各自流程修改 React、Astro 或 CSS。</li>
+  <li>IDE 模式下，Studio 仍可查看與預覽，但來源保存暫停；它不會另外開啟程式編輯器。</li>
+  <li>完成檔案編輯後先檢查來源，修正診斷，再切回 Studio 模式。</li>
+  <li>重新載入文章或設定，確認工作室讀到最新版本，再繼續透過介面保存。</li>
+</ol>
+<p>
+  IDE 模式是工作方式的協調，不會阻止編輯器或其他程式寫檔。
+  同一份內容應由一個入口編輯；如果你把任務交給 AI，請告訴它正在使用哪個模式、要修改哪篇文章，
+  以及需要保留的網址、章節連結與媒體引用。
+</p>
+
+<h2 id="editing-files">直接編輯正文與屬性</h2>
+<p>一篇文章對應一個目錄，包含兩個檔案：</p>
+<pre><code class="language-text">content/articles/my-first-note/
+├── content.html
+└── meta.json</code></pre>
+<p>
+  目錄名稱是本機文章識別碼，不是公開網址。<code>content.html</code> 保存正文，
+  <code>meta.json</code> 保存標題、分類、Tag、日期、精選圖與 SEO。
+  新增文章時建立這兩個內容檔即可，不需新增 React 元件或 Astro 入口。
+</p>
+<pre><code class="language-html">&lt;p&gt;這是文章的開頭，說明主題與讀者能得到的資訊。&lt;/p&gt;
+&lt;h2 id="first-section"&gt;第一個章節&lt;/h2&gt;
+&lt;p&gt;寫下這個章節的內容。&lt;/p&gt;</code></pre>
+<p>
+  正文使用 UTF-8 與 LF 換行，保留唯一的章節 id。
+  不要加入整份 HTML 文件或另一個 H1，文章標題由共用版型提供。
+  完整的章節寫法可看 <a href="/notes/article-basics/#article-structure">正文與目錄指南</a>。
+</p>
+
+<h3 id="metadata-example">以完整欄位建立草稿</h3>
+<p>
+  以下是可作為起點的完整草稿資料。分類與 Tag 使用本 release 已有的項目；
+  日期先留空，準備發布時再明確設定有效的發布及更新時間。
+</p>
+<pre><code class="language-json">{
+  "status": "draft",
+  "title": "我的第一篇筆記",
+  "slug": "my-first-note",
+  "category": "notes",
+  "tags": ["example"],
+  "publishedAt": null,
+  "updatedAt": null,
+  "featuredImage": null,
+  "featuredImageAlt": "",
+  "seo": {
+    "title": null,
+    "description": "記錄第一篇筆記的主題、操作與結果。",
+    "index": null,
+    "ogImage": null
+  }
+}</code></pre>
+<p>
+  <code>null</code> 表示未設定或依欄位規則繼承，不能一律換成空字串。
+  請勿另加未知欄位或把 id 寫入 meta.json。發布前確認分類內沒有重複的網址名稱，
+  並使用有效的含時區日期；更新時間不得早於發布時間。
+</p>
+
+<h2 id="independent-pages">先建立首頁與需要的固定頁面</h2>
+<p>
+  首頁可以從 <code>packages/ui/src/pages/home/HomePage.tsx</code> 調整；對應 Astro 入口為
+  <code>site/src/pages/index.astro</code>。先決定首頁要呈現的內容、版面與導覽，
+  再依需要新增 FAQ、About、Privacy 等固定頁面。這些頁面不必假裝成文章，也不會隨文章分類改變網址。
+  以新頁面 <code>/about/</code> 為例，它需要以下相互對應的入口：
+</p>
+<ol>
+  <li>在 <code>packages/ui/src/pages/</code> 建立 React 頁面主體，並從 <code>packages/ui/src/index.ts</code> 公開匯出。</li>
+  <li>在 <code>site/src/pages/</code> 建立對應的 Astro Entry，使用既有 BaseLayout 組成完整文件。</li>
+  <li>在 <code>site/src/fixed-pages.ts</code> 登錄頁面網址、Entry、SEO 及使用的媒體。</li>
+  <li>如果該頁從 JSON 讀取資料，再登錄同一份 strict Schema 與對應資料檔；全部完成後，在 Studio「全站設定」或 <code>content/site.json</code> 加入導覽。</li>
+</ol>
+<p>
+  以上是新增頁面的操作入口，範例沒有額外提供 FAQ 或 About 頁。
+  可讓 AI 先讀專案的 <code>AGENTS.md</code>、<code>README.md</code>，
+  再依 <code>docs/blog/一般獨立頁面建立流程.md</code> 操作；新增文章則使用
+  <code>docs/blog/新增文章流程.md</code>。
+</p>
+<h3 id="article-template">再調整文章共用版型與設定</h3>
+<p>
+  所有文章共用 <code>packages/ui/src/article/ArticlePage.tsx</code>，
+  共用樣式在 <code>packages/ui/src/styles/index.css</code>。
+  在這裡調整文章標題、日期、精選圖片、閱讀區、目錄及段落、表格、媒體的呈現，不要逐篇複製版型。
+  建議用這五篇文章一起檢查長標題、多層章節、圖片、影片與表格，再回到 Studio 完成網站名稱、導覽與 SEO 預設值。
+</p>
+<p>
+  程式與樣式修改會由監看工具更新，先到 4321 檢查；成功更新網站後再到 4322 核對完整輸出。
+  不要直接修改產生的 dist 檔案，下一次更新就會重新產生。
+  Studio 的裝置模擬專供文章預覽，固定頁請使用瀏覽器的響應式檢視工具。
+  版型確定後，日常新增文章只建立 HTML／JSON，或直接透過 Studio 操作。
+</p>
+
+<h2 id="check-links">完成來源檢查與正式更新</h2>
+<p>Docker 使用者在專案根目錄依序執行：</p>
+<pre><code class="language-bash">docker compose exec app pnpm validate:content
+docker compose exec app pnpm build</code></pre>
+<p>原生環境或已進入容器終端時，直接執行：</p>
+<pre><code class="language-bash">pnpm validate:content
+pnpm build</code></pre>
+<p>
+  檢查來源會確認資料格式、路由與媒體；正式建置再檢查完整 HTML、錨點、SEO 與網站輸出，成功後才更新 dist。
+  開啟 <a href="/notes/article-basics/#stable-anchors">第一篇的指定章節</a>，
+  也可以實際確認跨文連結與頁內定位的效果。
+</p>
+<p>
+  Docker 啟動或原生 <code>pnpm start</code> 已提供 Studio、4321 與 4322，不需額外啟動預覽服務。
+  修改程式後還要執行 <code>pnpm typecheck</code> 及對應測試，
+  完整檢查使用 <code>pnpm verify</code>；Docker 使用者可在容器終端執行。
+  一般修改文章、頁面或樣式後，保存並更新網站即可；只有工具鏈、相依套件或容器設定改變時，才需依變更重新準備環境或建置 image。
+</p>
+
+<h2 id="backup-and-recovery">保存來源、網站與復原資訊</h2>
+<p>
+  Docker 使用的專案工作目錄也是主機上的真實資料；停止或重建容器不會自動刪除內容。
+  需要備份時先停止服務，再用備份工具保存完整專案的必要資料及隱藏檔，並保留檔案權限。
+  至少包含 <code>content/</code>、<code>media/source/</code>、<code>.alfred/</code> 與對應的
+  <code>dist/</code>，以及你修改過的程式、設定和 lockfile。
+</p>
+<pre><code class="language-bash">docker compose down
+# 完成主機資料備份後，再啟動原有專案。
+docker compose up -d --wait --wait-timeout 600</code></pre>
+<p>
+  <code>.alfred/</code> 除了處理快取，也保存交易、工作與復原證據，不能把整個目錄當成可任意清空的暫存檔。
+  只備份 dist 足以保存公開網站，卻無法還原完整的作者編輯資料。
+  還原備份時使用同一組一致資料，先在獨立副本確認可啟動、閱讀、編輯與更新。
+</p>
+<ol>
+  <li>不小心刪除文章或媒體時，先到「衝突與復原」查看可還原的項目。</li>
+  <li>按「比較版本」，在「復原比較」檢查目前內容、原始備份及候選版本。</li>
+  <li>視情況下載內容並明確選擇要保留或還原的版本；有同名新資料時不會直接覆蓋。</li>
+  <li>還原文章、設定或較舊網站後，再確認「目前網站版本」與來源狀態；需要時更新網站。</li>
+</ol>
+
+<h2 id="repair-mode">正常啟動被阻擋時使用修復模式</h2>
+<p>
+  如果正常啟動因來源無效、網站產物無法確認，或存在未完成的復原工作而失敗，
+  先保留資料並查看日誌。修復模式提供 Studio 的檢查與復原入口，
+  不會自動覆蓋網站，也不會刪除 <code>.alfred/</code>。
+</p>
+<pre><code class="language-bash">docker compose stop app
+docker compose up -d --build --wait --wait-timeout 600 repair</code></pre>
+<p>
+  此時只開啟 <code>http://localhost:5173/</code> 的 Studio，沒有 4321 或 4322。
+  進入「衝突與復原」處理待復原項目；若是來源內容問題，依診斷修正文章或設定。
+  壞 JSON 等無法由表單讀取的資料，可使用主機文字編輯器或 AI 修正，遵守同一份資料的編輯模式協調。
+  修正後檢查來源，並在需要時更新網站。
+</p>
+<p>確認問題已處理後，停止修復模式，再恢復正常啟動：</p>
+<pre><code class="language-bash">docker compose stop repair
+docker compose up -d --wait --wait-timeout 600 app</code></pre>
+
+<h2 id="customized-upgrades">更新版本時保留自己的網站</h2>
+<ol>
+  <li>先閱讀新版本的 CHANGELOG.md，確認功能、相容性及需要調整的設定。</li>
+  <li>停止作者工作階段並備份完整專案，包括自己的 React／Astro／CSS、頁面登錄、設定、文章、原始媒體及 .alfred／dist。</li>
+  <li>在獨立的專案副本整合新版本；保留自訂頁面、共用版型與內容，不要用新版整包覆蓋自己的網站。</li>
+  <li>依 README 配置相符的工具與依賴；Docker 使用者使用對應版本的 Dockerfile 重新建置工作環境。</li>
+  <li>完成來源檢查、型別與相關測試，確認 4321 的頁面與日常 Studio 操作，再成功更新網站並檢查 4322。</li>
+  <li>核對結果後交付新的完整 dist；保留原有備份，直到確認可以持續編輯、建置與還原。</li>
+</ol>
+<p>
+  如果使用 Git，可以在自己的分支比較、整合變更並留下可回復的紀錄；也可以請 AI 根據版本差異協助。
+  不論使用哪種方式，都應保留自己的程式與作者資料。還原時使用同一份備份中的程式、依賴與資料，避免只回復其中一部分。
+</p>
+
+<h2 id="maintenance-questions">常見問題</h2>
+<dl>
+  <dt>工作室說資料已被其他地方修改？</dt>
+  <dd>保留未保存內容，依衝突介面比較編輯基底、目前緩衝與已保存版本，再明確合併或重新載入；不要強制覆蓋其他編輯。</dd>
+  <dt>為什麼回復舊網站後，畫面顯示與來源不同？</dt>
+  <dd>還原網站只改變目前產物；來源可能仍是較新內容。確認想保留的版本，再明確更新網站，不要把舊成功紀錄當成目前網站。</dd>
+  <dt>檔案明明存在，網站卻不能啟動？</dt>
+  <dd>依日誌確認是權限、來源格式、缺媒體，還是產物或復原狀態問題。需要處理復原時使用修復模式，不要先刪除私有資料。</dd>
+  <dt>要怎麼把完成的網站交付出去？</dt>
+  <dd>使用成功建立的完整 <code>dist/</code>。公開網站只需其中的靜態頁面與資源，工作室、原始素材及私有工作紀錄留在作者環境。</dd>
+</dl>
+<p>
+  預期結果是你能在 Studio 與檔案編輯之間有序切換，新增文章不用更動程式，
+  而新增獨立頁面有明確入口；資料在容器重啟後仍在，遇到衝突也有可查的版本與處理流程。
+</p>
+<p>
+  完整的五篇指南已整理在 <a href="/articles/">文章總覽</a>，
+  你也可以從 <a href="/">首頁</a>依建議閱讀順序重新開始。
+</p>
+
+<h2 id="upgrade-030">升級與還原自己的網站</h2>
+<p>Foliohaven 0.3.0 可讀取 0.2.0 的原有設定與文章，未填的新欄位會套用預設值。保存後會加入新版欄位，舊程式不一定能讀取；降版必須還原升級前完整備份，不能只切換 Git 版本。</p>
+<p>升級前保留自訂程式、文章與媒體、私有設定、工作與復原紀錄及對應的成功網站。先在副本測試，再將自己的版型修改與新版共用功能整合。新增文章繼續只修改 HTML／JSON，無須逐篇新增元件。</p>

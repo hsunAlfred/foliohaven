@@ -1,0 +1,205 @@
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.8rem;
+}
+.preview-device-controls {
+  display: flex;
+  height: var(--studio-control-height);
+  align-items: center;
+  border: 1px solid var(--studio-line);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.preview-device-controls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  height: 100%;
+  min-height: 0;
+  padding: 0 0.55rem;
+}
+.preview-device-controls button + button {
+  border-left: 1px solid var(--studio-line);
+}
+.preview-device-controls button[aria-pressed='true'] {
+  color: var(--studio-accent);
+  background: var(--studio-accent-soft);
+}
+.preview-zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+.preview-zoom select {
+  width: 7.5rem;
+  min-width: 0;
+}
+.preview-toolbar > button {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+.preview-stage {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: auto;
+  background: #eeefe9;
+  border: 1px solid var(--studio-line);
+  border-radius: 5px;
+  padding: 0;
+}
+.preview-sheet {
+  position: relative;
+  flex: 0 0 auto;
+  max-width: none;
+  margin-inline: auto;
+  overflow: hidden;
+  background: white;
+}
+.preview-sheet iframe {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  min-height: 0;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  transform-origin: top left;
+}
+.preview-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 1rem;
+  color: var(--studio-muted);
+  text-align: center;
+}
+.preview-caption {
+  margin: 0.4rem 0 0.7rem;
+  font-size: 0.85rem;
+  color: var(--studio-muted);
+}
+.preview-feedback {
+  block-size: 8rem;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  border-top: 1px solid var(--studio-line);
+  padding: 0.5rem 0;
+}
+.preview-feedback:focus-visible {
+  outline: 2px solid var(--studio-accent);
+  outline-offset: 2px;
+}
+.preview-feedback h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+}
+.preview-feedback > .notice,
+.preview-feedback > .diagnostics,
+.preview-feedback > p {
+  margin-block: 0;
+}
+.preview-dialog {
+  width: min(1480px, calc(100vw - 32px));
+}
+.preview-dialog .preview-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--studio-surface);
+  padding-bottom: 0.5rem;
+}
+.editor-title-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.editor-title-heading > svg {
+  flex-shrink: 0;
+}
+@media (min-width: 1281px) {
+  .editor-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .editor-settings {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1281px) and (max-width: 1535px) {
+  .editor-workspace .editor-code .cm-editor {
+    min-height: 380px;
+  }
+}
+@media (max-width: 1280px) {
+  .editor-mobile-tabs {
+    display: flex;
+  }
+  .editor-layout,
+  .editor-columns {
+    display: block;
+  }
+  .editor-layout[data-view='write'] .editor-preview,
+  .editor-layout[data-view='write'] .editor-settings,
+  .editor-layout[data-view='preview'] .editor-code,
+  .editor-layout[data-view='preview'] .editor-settings,
+  .editor-layout[data-view='settings'] .editor-workspace {
+    display: none;
+  }
+  .editor-settings {
+    max-width: 58rem;
+  }
+  .editor-settings .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .editor-columns > section {
+    width: 100%;
+  }
+}
+@media (max-width: 600px) {
+  .preview-toolbar {
+    gap: 0.5rem;
+  }
+  .preview-zoom {
+    flex: 1;
+  }
+  .preview-zoom select {
+    width: 100%;
+    max-width: 8rem;
+  }
+  .preview-device-controls {
+    width: 100%;
+  }
+  .preview-device-controls button {
+    flex: 1;
+    justify-content: center;
+  }
+  .editor-settings .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .editor-layout ~ .sticky-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+  .editor-layout ~ .sticky-actions button,
+  .editor-layout ~ .sticky-actions a {
+    width: 100%;
+    margin: 0;
+    min-width: 0;
+    justify-content: center;
+  }
+}

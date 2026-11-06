@@ -1,0 +1,22 @@
+{
+  "status": "published",
+  "title": "圖片、尺寸與替代文字",
+  "slug": "image-content",
+  "category": "notes",
+  "tags": ["example", "media"],
+  "publishedAt": "2026-10-21T09:00:00+08:00",
+  "updatedAt": "2026-11-05T09:00:00+08:00",
+  "featuredImage": "/media/d65927b5-381f-4d2e-90d8-f6a8c5e38e57/image.webp",
+  "featuredImageAlt": "深藍底的幾何構圖，左側藍色方塊與右側橙色圓形。",
+  "seo": {
+    "title": null,
+    "description": "完整介紹圖片上傳與處理、尺寸分組選擇、正文多尺寸圖片、Alt、精選圖片及 OG Image 的設定與檢查。",
+    "index": null,
+    "ogImage": null
+  },
+  "excerpt": "從媒體庫選圖片、決定 1200 × 630 分享圖，到準備 SVG／ICO 網站圖示；了解不同圖片用途與替代文字。",
+  "relatedReading": {
+    "title": "接著閱讀",
+    "articleIds": ["sample-video-content", "sample-local-editing"]
+  }
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "notes",
+    "name": "筆記",
+    "description": "開始使用、圖片、分類搜尋與 SEO 的操作指南。",
+    "seo": {
+      "title": null,
+      "description": null,
+      "index": null,
+      "ogImage": null
+    }
+  },
+  {
+    "path": "tools",
+    "name": "工具",
+    "description": "影片、IDE 編輯與日常維護的操作指南。",
+    "seo": {
+      "title": null,
+      "description": null,
+      "index": null,
+      "ogImage": null
+    }
+  }
+]

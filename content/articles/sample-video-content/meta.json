@@ -1,0 +1,22 @@
+{
+  "status": "published",
+  "title": "影片、封面與播放",
+  "slug": "video-content",
+  "category": "tools",
+  "tags": [],
+  "publishedAt": "2026-10-23T08:00:00+08:00",
+  "updatedAt": "2026-11-05T09:00:00+08:00",
+  "featuredImage": null,
+  "featuredImageAlt": "",
+  "seo": {
+    "title": null,
+    "description": "以可播放的合成短影片，說明影片上傳與處理、Poster 時間、引用 HTML、手機播放及失敗重試。",
+    "index": null,
+    "ogImage": null
+  },
+  "excerpt": "上傳與處理影片、選擇 Poster，再用標準 HTML 加入文章，檢查播放與來源預覽。",
+  "relatedReading": {
+    "title": "接著閱讀",
+    "articleIds": ["sample-image-content"]
+  }
+}

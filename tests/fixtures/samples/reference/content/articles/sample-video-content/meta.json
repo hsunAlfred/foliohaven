@@ -1,0 +1,17 @@
+{
+  "status": "published",
+  "title": "短影片與播放前封面",
+  "slug": "video-content",
+  "category": "tools",
+  "tags": [],
+  "publishedAt": "2026-10-23T08:00:00+08:00",
+  "updatedAt": "2026-10-23T08:00:00+08:00",
+  "featuredImage": null,
+  "featuredImageAlt": "",
+  "seo": {
+    "title": null,
+    "description": "使用兩秒本機合成影片示範 WebM、播放控制、封面與不設定標籤的文章。",
+    "index": null,
+    "ogImage": null
+  }
+}

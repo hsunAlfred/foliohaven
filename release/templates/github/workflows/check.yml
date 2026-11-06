@@ -1,0 +1,106 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main, release]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Prepare the public release source
+        run: node scripts/package-release.mjs --directory "$RUNNER_TEMP/foliohaven-release-source" --source "$GITHUB_WORKSPACE"
+      - name: Build the complete public development toolchain
+        run: docker build --target dev -t foliohaven-check:local "$RUNNER_TEMP/foliohaven-release-source"
+      - name: Run the same complete verification in Docker
+        run: docker run --name foliohaven-check --shm-size=1g --env CI=true foliohaven-check:local pnpm verify
+      - name: Verify the standalone release image and persistent workspace
+        run: bash scripts/check-release-docker.sh
+      - name: Collect browser reports
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p .alfred/ci-reports
+          if docker container inspect foliohaven-check > /dev/null 2>&1; then
+            docker cp foliohaven-check:/workspaces/foliohaven/.alfred/reports/playwright .alfred/ci-reports/playwright || printf '%s\n' 'Browser reports were not created before verification stopped.'
+          fi
+          if [ -d .alfred/reports/release-docker-host ]; then
+            cp -R .alfred/reports/release-docker-host .alfred/ci-reports/release-docker-host
+          fi
+      - name: Upload verification reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-reports
+          path: .alfred/ci-reports
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Remove the completed check container
+        if: always()
+        run: docker rm -f foliohaven-check || true
+
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up the fixed native Node.js version
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Install the fixed native package manager and media tools
+        run: |
+          npm install --global --no-audit --no-fund pnpm@12.15.0
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg build-essential python3 util-linux
+      - name: Export a clean source without Git metadata
+        run: node scripts/package-release.mjs --directory "$RUNNER_TEMP/foliohaven-native" --source "$GITHUB_WORKSPACE"
+      - name: Install and verify the native environment
+        working-directory: ${{ runner.temp }}/foliohaven-native
+        run: |
+          pnpm install --frozen-lockfile --prod=false
+          pnpm exec playwright install --with-deps chromium firefox webkit
+          pnpm run setup
+          pnpm check:compiler
+          pnpm typecheck
+          pnpm build
+      - name: Verify native authoring, source watch and restart persistence
+        env:
+          NATIVE_SOURCE: ${{ runner.temp }}/foliohaven-native
+        run: |
+          python3 - <<'NATIVE_MARKER'
+          import json, os, pathlib
+          private = pathlib.Path(os.environ['NATIVE_SOURCE'], '.alfred')
+          private.mkdir(mode=0o700, exist_ok=True)
+          marker = private / 'release-check-workspace.json'
+          with marker.open('x') as output:
+              json.dump({'schemaVersion': 1, 'purpose': 'release-validation'}, output)
+          marker.chmod(0o600)
+          NATIVE_MARKER
+          node scripts/check-release-native.mjs --source "$NATIVE_SOURCE"
+      - name: Preserve native acceptance reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-acceptance-reports
+          path: ${{ runner.temp }}/foliohaven-native/.alfred/reports
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7

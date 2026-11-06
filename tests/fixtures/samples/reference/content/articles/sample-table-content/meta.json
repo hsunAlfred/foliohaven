@@ -1,0 +1,17 @@
+{
+  "status": "published",
+  "title": "表格、清單與公開閱讀",
+  "slug": "table-content",
+  "category": "notes",
+  "tags": ["example", "workflow"],
+  "publishedAt": "2026-10-22T09:00:00+08:00",
+  "updatedAt": "2026-10-22T09:00:00+08:00",
+  "featuredImage": null,
+  "featuredImageAlt": "",
+  "seo": {
+    "title": null,
+    "description": "示範含標題與欄位標頭的表格、步驟清單，以及仍可公開閱讀的 noindex 文章。",
+    "index": false,
+    "ogImage": null
+  }
+}

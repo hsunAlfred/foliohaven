@@ -1,0 +1,22 @@
+{
+  "status": "published",
+  "title": "分類、搜尋與 SEO",
+  "slug": "table-content",
+  "category": "notes",
+  "tags": ["example", "workflow"],
+  "publishedAt": "2026-10-22T09:00:00+08:00",
+  "updatedAt": "2026-11-05T09:00:00+08:00",
+  "featuredImage": null,
+  "featuredImageAlt": "",
+  "seo": {
+    "title": null,
+    "description": "以分類、Tag、分頁、搜尋與 SEO 操作說明，展示表格、清單，以及可公開閱讀但不列入 Sitemap 的 noindex 文章。",
+    "index": false,
+    "ogImage": null
+  },
+  "excerpt": "用分類與 Tag 組合搜尋內容，設定八種頁型的 SEO 繼承，並了解 noindex 對公開閱讀與搜尋收錄的差別。",
+  "relatedReading": {
+    "title": "接著閱讀",
+    "articleIds": ["sample-article-basics", "sample-local-editing"]
+  }
+}

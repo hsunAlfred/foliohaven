@@ -1,0 +1,31 @@
+{
+  "name": "Foliohaven",
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
+  "service": "dev",
+  "runServices": ["dev"],
+  "workspaceFolder": "/workspaces/foliohaven",
+  "remoteUser": "node",
+  "updateRemoteUserUID": true,
+  "shutdownAction": "stopCompose",
+  "postCreateCommand": "bash .devcontainer/check-environment.sh && pnpm install --frozen-lockfile --prod=false && pnpm run setup",
+  "waitFor": "postCreateCommand",
+  "forwardPorts": [4321, 5173, 4322],
+  "portsAttributes": {
+    "4321": { "label": "Astro", "onAutoForward": "notify" },
+    "5173": { "label": "Studio", "onAutoForward": "notify" },
+    "4322": { "label": "dist preview", "onAutoForward": "notify" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["astro-build.astro-vscode", "esbenp.prettier-vscode"],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.encoding": "utf8",
+        "files.eol": "\n",
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": false
+      }
+    }
+  }
+}

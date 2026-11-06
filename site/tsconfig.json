@@ -1,0 +1,23 @@
+{
+  "extends": ["astro/tsconfigs/strict", "../tsconfig.base.json"],
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["astro/client", "react", "react-dom"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "paths": {
+      "virtual:alfred/articles-search": ["./src/components/ArticlesSearch.tsx"]
+    },
+    "noEmit": true,
+    "incremental": true,
+    "tsBuildInfoFile": "../.alfred/cache/typescript/site.tsbuildinfo"
+  },
+  "include": [".astro/types.d.ts", "src/**/*", "astro.config.ts"],
+  "exclude": ["node_modules", "dist", "../dist", "../.alfred"],
+  "references": [
+    { "path": "../packages/core/tsconfig.json" },
+    { "path": "../packages/ui/tsconfig.json" }
+  ]
+}

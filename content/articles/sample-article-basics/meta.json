@@ -1,0 +1,22 @@
+{
+  "status": "published",
+  "title": "開始使用：從環境到建站與第一篇文章",
+  "slug": "article-basics",
+  "category": "notes",
+  "tags": ["example", "workflow"],
+  "publishedAt": "2026-10-20T09:00:00+08:00",
+  "updatedAt": "2026-11-05T09:00:00+08:00",
+  "featuredImage": null,
+  "featuredImageAlt": "",
+  "seo": {
+    "title": null,
+    "description": "選擇原生環境或 Docker，依序準備固定頁面、共用文章版型與網站設定，再完成第一篇文章及預覽、建置與靜態網站輸出。",
+    "index": null,
+    "ogImage": null
+  },
+  "excerpt": "第一次使用 Foliohaven：選擇環境、調整固定頁面與共用文章版型，再用 Studio 建立、保存及發布文章。",
+  "relatedReading": {
+    "title": "接著閱讀",
+    "articleIds": ["sample-image-content", "sample-table-content"]
+  }
+}

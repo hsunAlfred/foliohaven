@@ -1,0 +1,30 @@
+---
+import { SiteHeader, SiteFooter } from '@foliohaven/ui';
+import type { SiteViewModel, SeoViewModel } from '@foliohaven/core';
+import '@foliohaven/ui/styles.css';
+import SeoHead from '../components/SeoHead.astro';
+import readingHistorySource from '../scripts/reading-history.ts?raw';
+import { compileReadingHistory } from '../scripts/reading-history-head.js';
+interface Props {
+  site: SiteViewModel;
+  seo: SeoViewModel;
+  currentPath: string;
+}
+const { site, seo, currentPath } = Astro.props;
+const readingHistoryScript = compileReadingHistory(readingHistorySource);
+---
+
+<!doctype html>
+<html lang={site.language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script is:inline set:html={readingHistoryScript} />
+    <SeoHead seo={seo} favicon={site.favicon} iconSet={site.iconSet} />
+  </head>
+  <body>
+    <SiteHeader site={site} currentPath={currentPath} />
+    <slot />
+    <SiteFooter site={site} />
+  </body>
+</html>

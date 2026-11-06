@@ -1,0 +1,13 @@
+name: foliohaven-dev
+
+services:
+  dev:
+    command: ['sleep', 'infinity']
+    healthcheck:
+      disable: true
+    volumes:
+      - type: bind
+        source: .
+        target: /workspaces/foliohaven
+        bind:
+          create_host_path: false

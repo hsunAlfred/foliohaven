@@ -1,0 +1,25 @@
+<p>文章的正文與屬性分開保存，編輯時可以分別檢查內容與發布資訊。</p>
+<h2 id="editing-files">編輯正文與屬性</h2>
+<p>
+  在 <code>content.html</code> 撰寫正文，在 <code>meta.json</code> 設定標題、分類、標籤與日期。
+  正文使用 HTML 片段，不需要自行加入整份網頁的文件結構。
+</p>
+<pre><code class="language-html">&lt;h2 id="first-section"&gt;第一個章節&lt;/h2&gt;
+&lt;p&gt;寫下這個章節的內容。&lt;/p&gt;</code></pre>
+<h3 id="metadata-example">明確設定文章屬性</h3>
+<pre><code class="language-json">{
+  "title": "我的文章",
+  "slug": "my-article",
+  "category": "tools",
+  "tags": ["example"]
+}</code></pre>
+<p>上方僅展示部分欄位；完整文章還要確認發布狀態、摘要與發布及更新日期。</p>
+<h2 id="check-links">確認章節與相關文章</h2>
+<p>
+  開啟<a href="/notes/article-basics/#stable-anchors">文章結構範例的指定章節</a>，
+  確認連結指向正確內容，再檢查分類、標籤與預覽結果。
+</p>
+<p>
+  編輯完成後，可從<a href="/tag/workflow/">工作流程標籤</a>找到相關範例，
+  或繼續閱讀<a href="/tools/video-content/">短影片範例</a>。
+</p>

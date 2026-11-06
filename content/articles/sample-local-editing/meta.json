@@ -1,0 +1,22 @@
+{
+  "status": "published",
+  "title": "固定頁面、文章版型與 IDE 維護",
+  "slug": "local-editing",
+  "category": "tools",
+  "tags": ["example", "workflow"],
+  "publishedAt": "2026-10-20T09:00:00+08:00",
+  "updatedAt": "2026-11-05T09:00:00+08:00",
+  "featuredImage": null,
+  "featuredImageAlt": "",
+  "seo": {
+    "title": null,
+    "description": "從首頁、FAQ、About 與共用文章版型的原始碼入口開始，學習 Studio、IDE 與 AI 協作，並保留自訂網站完成檢查、備份、復原及版本更新。",
+    "index": null,
+    "ogImage": null
+  },
+  "excerpt": "用 IDE 或 AI 修改固定頁與版型，管理 HTML／JSON，並在升級前保留自己的程式、內容及復原資料。",
+  "relatedReading": {
+    "title": "接著閱讀",
+    "articleIds": ["sample-article-basics", "sample-table-content"]
+  }
+}

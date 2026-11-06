@@ -1,0 +1,25 @@
+---
+import ArticlesSearch from 'virtual:alfred/articles-search';
+import { parseSearchIndex, searchTagOptions } from '@foliohaven/core';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import {
+  loadHomePage,
+  loadListPage,
+  loadSearchIndex,
+} from '../../lib/server/context.js';
+const [model, home, index] = await Promise.all([
+  loadListPage('/articles/'),
+  loadHomePage(),
+  loadSearchIndex(),
+]);
+const tags = searchTagOptions(parseSearchIndex(index).articles);
+---
+
+<BaseLayout site={model.site} seo={model.seo} currentPath="/articles/">
+  <ArticlesSearch
+    model={model}
+    categories={home.categories}
+    tags={tags}
+    client:load
+  />
+</BaseLayout>
