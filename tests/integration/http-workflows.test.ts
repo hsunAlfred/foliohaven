@@ -169,7 +169,7 @@ describe('API-01：jobs/media/recovery完整HTTP工作流程', () => {
     });
     expect(replay.status).toBe(202);
     expect(replay.body).toEqual(created.body);
-    const names = await readdir(join(root, '.alfred/operations'));
+    const names = await readdir(join(root, '.foliohaven/operations'));
     const name = names.find((name) => name.endsWith(`--${key}.json`));
     if (!name) throw new Error('operation fixture missing');
     const operationId = name.split('--')[0];
@@ -536,7 +536,7 @@ describe('API-01：jobs/media/recovery完整HTTP工作流程', () => {
     expect(bad.status).toBe(422);
   });
   it('真FFmpeg影音HTTP job、WebM Range與poster設定更新後結果失效', async () => {
-    const sourceFile = join(root, '.alfred/video-fixture.webm');
+    const sourceFile = join(root, '.foliohaven/video-fixture.webm');
     await runControlledProcess({
       command: 'ffmpeg',
       args: [

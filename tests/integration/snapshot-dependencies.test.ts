@@ -23,11 +23,11 @@ async function fixture(
       join(root, 'pnpm-workspace.yaml'),
       yaml.replace(
         /^storeDir:.*$/m,
-        `storeDir: ${join(root, '.alfred/empty-store')}`,
+        `storeDir: ${join(root, '.foliohaven/empty-store')}`,
       ),
     );
   }
-  const job = join(root, '.alfred/builds', randomUUID());
+  const job = join(root, '.foliohaven/builds', randomUUID());
   await mkdir(job, { recursive: true, mode: 0o700 });
   const snapshot = join(job, 'snapshot');
   await copyBuildSnapshot(root, snapshot, await scanBuildInputs(root));

@@ -26,6 +26,7 @@ import type {
 } from '@foliohaven/core';
 import type { OperationReceipt, ReadSession } from '../files/types.js';
 import {
+  privateResource,
   atomicJson,
   copyDurable,
   isMissing,
@@ -173,7 +174,10 @@ export class MediaService {
   async #binding(id: string, state: SourceState): Promise<Binding | null> {
     try {
       const value = parseBinding(
-        await readJson(this.#root, `.alfred/media-records/${id}.json`),
+        await readJson(
+          this.#root,
+          privateResource(this.#root, `media-records/${id}.json`),
+        ),
         id,
       );
       if (
@@ -189,10 +193,10 @@ export class MediaService {
     return this.#receipts.binding(state);
   }
   async #saveBinding(binding: Binding): Promise<void> {
-    await safeMkdir(this.#root, '.alfred/media-records');
+    await safeMkdir(this.#root, privateResource(this.#root, 'media-records'));
     await atomicJson(
       this.#root,
-      `.alfred/media-records/${binding.asset.id}.json`,
+      privateResource(this.#root, `media-records/${binding.asset.id}.json`),
       binding,
     );
   }
@@ -202,12 +206,19 @@ export class MediaService {
     inspection: WorkerResult['inspection'],
   ): Promise<void> {
     try {
-      await safeMkdir(this.#root, '.alfred/media-inspections');
-      await atomicJson(this.#root, `.alfred/media-inspections/${id}.json`, {
-        schemaVersion: 1,
-        sourceRevision,
-        inspection,
-      });
+      await safeMkdir(
+        this.#root,
+        privateResource(this.#root, 'media-inspections'),
+      );
+      await atomicJson(
+        this.#root,
+        privateResource(this.#root, `media-inspections/${id}.json`),
+        {
+          schemaVersion: 1,
+          sourceRevision,
+          inspection,
+        },
+      );
     } catch {
       process.stderr.write(
         `${JSON.stringify({ level: 'warning', code: 'MEDIA_INSPECTION_CACHE_UNAVAILABLE', sourceId: id })}\n`,
@@ -253,7 +264,10 @@ export class MediaService {
     try {
       const value = await readJson(
         this.#root,
-        `.alfred/media-inspections/${state.source.id}.json`,
+        privateResource(
+          this.#root,
+          `media-inspections/${state.source.id}.json`,
+        ),
       );
       if (
         !record(value) ||
@@ -274,7 +288,7 @@ export class MediaService {
     id: string,
     requireReady = false,
   ): Promise<{ state: SourceState; directory: string; path: string }> {
-    const directory = `.alfred/media-work/${randomUUID()}`;
+    const directory = privateResource(this.#root, `media-work/${randomUUID()}`);
     await safeMkdir(this.#root, directory);
     try {
       const read = (
@@ -376,7 +390,7 @@ export class MediaService {
         fields = { ...fields, ...(await afterParts) };
       const path = await safePath(
         this.#root,
-        `.alfred/staging/${binary.preparedBinaryId}.part`,
+        privateResource(this.#root, `staging/${binary.preparedBinaryId}.part`),
       );
       const result = await this.#inspect(
         path,
@@ -453,7 +467,10 @@ export class MediaService {
     const keys = sourceKeys(source.id, source.source);
     const path = await safePath(
       this.#root,
-      `.alfred/staging/${staged.binary.preparedBinaryId}.part`,
+      privateResource(
+        this.#root,
+        `staging/${staged.binary.preparedBinaryId}.part`,
+      ),
     );
     const actual = await streamHash(path);
     if (
@@ -998,8 +1015,8 @@ export class MediaService {
       if (cacheLease === null)
         throw new MediaError('MEDIA_BUSY', '媒體cache正由其他程序使用。', 409);
       releaseCache = () => cacheLease.release();
-      const directory = `.alfred/media/${processingHash}`;
-      await safeMkdir(this.#root, '.alfred/media');
+      const directory = privateResource(this.#root, `media/${processingHash}`);
+      await safeMkdir(this.#root, privateResource(this.#root, 'media'));
       let result: WorkerResult | undefined;
       const slot = await acquireMediaSlot(
         this.#options.coordinationRoot ?? this.#root,
@@ -1047,7 +1064,10 @@ export class MediaService {
           throw error;
       }
       if (result === undefined) {
-        candidate = `.alfred/media/${processingHash}-${randomUUID()}.part`;
+        candidate = privateResource(
+          this.#root,
+          `media/${processingHash}-${randomUUID()}.part`,
+        );
         await safeMkdir(this.#root, candidate);
         await this.#phase('before-encode', id);
         result = await runMediaWorker(
@@ -1094,7 +1114,9 @@ export class MediaService {
         }
         await rename(await safePath(this.#root, candidate), destination);
         candidate = undefined;
-        await syncDirectory(await safePath(this.#root, '.alfred/media'));
+        await syncDirectory(
+          await safePath(this.#root, privateResource(this.#root, 'media')),
+        );
       }
       const asset = MediaAssetSchema.parse({
         ...project(id, result, presetVersion),

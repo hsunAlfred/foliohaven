@@ -15,6 +15,7 @@ import type {
   RecoveryResolution,
 } from '@foliohaven/core';
 import {
+  privateResource,
   atomicJson,
   isMissing,
   readJson,
@@ -109,11 +110,11 @@ export class ArtifactStore {
     return id;
   }
   #private(id: string, suffix: string): string {
-    return `.alfred/artifacts/${this.#id(id)}/${suffix}`;
+    return privateResource(this.#root, `artifacts/${this.#id(id)}/${suffix}`);
   }
   #candidate(journal: ArtifactJournal): string {
     return journal.kind === 'build'
-      ? `.alfred/builds/${journal.id}/output`
+      ? privateResource(this.#root, `builds/${journal.id}/output`)
       : this.#private(journal.id, 'candidate');
   }
   async #fault(phase: ArtifactFaultPhase, jobId: string): Promise<void> {
@@ -128,12 +129,16 @@ export class ArtifactStore {
     );
   }
   async #saveState(): Promise<void> {
-    await atomicJson(this.#root, '.alfred/artifacts/state.json', this.#state);
+    await atomicJson(
+      this.#root,
+      privateResource(this.#root, 'artifacts/state.json'),
+      this.#state,
+    );
   }
   async #journals(): Promise<ArtifactJournal[]> {
     const journals: ArtifactJournal[] = [];
     for (const entry of await readdir(
-      await safePath(this.#root, '.alfred/artifacts'),
+      await safePath(this.#root, privateResource(this.#root, 'artifacts')),
       { withFileTypes: true },
     )) {
       if (
@@ -210,10 +215,13 @@ export class ArtifactStore {
           'BUILD_PROMOTION_BUSY',
           '產物正在切換，請稍後重試。',
         );
-      await safeMkdir(this.#root, '.alfred/artifacts');
+      await safeMkdir(this.#root, privateResource(this.#root, 'artifacts'));
       try {
         this.#state = parseArtifactState(
-          await readJson(this.#root, '.alfred/artifacts/state.json'),
+          await readJson(
+            this.#root,
+            privateResource(this.#root, 'artifacts/state.json'),
+          ),
         );
       } catch (error) {
         if (!isMissing(error)) throw error;
@@ -624,7 +632,7 @@ export class ArtifactStore {
         'ARTIFACT_JOB_EXISTS',
         '此工作已有產物提交紀錄，不重複執行。',
       );
-    const resource = `.alfred/builds/${jobId}/output`;
+    const resource = privateResource(this.#root, `builds/${jobId}/output`);
     const prepared = await scanArtifactTree(
       this.#root,
       resource,
@@ -994,7 +1002,10 @@ export class ArtifactStore {
             'ARTIFACT_CAPTURE_REPLACED',
             '目前網站已由另一輪建置替換，請重新執行本次部署。',
           );
-        const resource = `.alfred/deployments/${deploymentId}/source`;
+        const resource = privateResource(
+          this.#root,
+          `deployments/${deploymentId}/source`,
+        );
         await copyArtifactTree(
           this.#root,
           'dist',
@@ -1052,7 +1063,7 @@ export class ArtifactStore {
           journal.artifactCommittedAt !== null)
       )
         return false;
-      const directory = `.alfred/artifacts/${jobId}`;
+      const directory = privateResource(this.#root, `artifacts/${jobId}`);
       let names: string[];
       try {
         names = await readdir(await safePath(this.#root, directory));
@@ -1128,7 +1139,9 @@ export class ArtifactStore {
         // journal 前中止的私有副本沒有正式副作用；整個目錄仍須符合固定結構。
         if (names.includes('backup')) return false;
         await rm(await safePath(this.#root, directory), { recursive: true });
-        await syncDirectory(await safePath(this.#root, '.alfred/artifacts'));
+        await syncDirectory(
+          await safePath(this.#root, privateResource(this.#root, 'artifacts')),
+        );
       }
       return true;
     });

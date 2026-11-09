@@ -110,7 +110,7 @@ function descendsFrom(
 
 /** 較長的合法測試影片提供可觀察的真轉碼期間，不加入產品測試hook。 */
 export async function replaceSandboxVideo(root: string) {
-  const stage = resolve(root, '.alfred/dev-test');
+  const stage = resolve(root, '.foliohaven/dev-test');
   await mkdir(stage, { recursive: true, mode: 0o700 });
   const output = resolve(stage, 'replacement.mp4');
   await runControlledProcess({

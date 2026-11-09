@@ -1,3 +1,4 @@
+import { privateResource } from '../../scripts/workspace-paths.mjs';
 // Shared author workflow contract for isolated Docker and native release checkers.
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
@@ -46,12 +47,18 @@ const pnpmVersion = execFileSync('pnpm', ['--version'], {
 assert.equal(process.versions.node, nodeVersion);
 assert.equal(packageJson.packageManager, `pnpm@${pnpmVersion}`);
 const marker = JSON.parse(
-  await readFile(resolve(root, '.alfred/release-check-workspace.json'), 'utf8'),
+  await readFile(
+    resolve(root, privateResource(root, 'release-check-workspace.json')),
+    'utf8',
+  ),
 );
 assert.deepEqual(marker, { schemaVersion: 1, purpose: 'release-validation' });
 await assert.rejects(access(resolve(root, '.git')), { code: 'ENOENT' });
 const origin = 'http://127.0.0.1:5173';
-const report = resolve(root, '.alfred/reports/release-docker-check');
+const report = resolve(
+  root,
+  privateResource(root, 'reports/release-docker-check'),
+);
 await mkdir(report, { recursive: true, mode: 0o700 });
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 async function call(path, { method = 'GET', body, headers = {}, signal } = {}) {
@@ -118,14 +125,16 @@ async function current() {
   return value.current;
 }
 async function jobFiles() {
-  const names = (await readdir(resolve(root, '.alfred/jobs')))
+  const names = (await readdir(resolve(root, privateResource(root, 'jobs'))))
     .filter((name) => /^[a-f0-9-]{36}\.json$/u.test(name))
     .sort();
   return Object.fromEntries(
     await Promise.all(
       names.map(async (name) => [
         name,
-        digest(await readFile(resolve(root, '.alfred/jobs', name))),
+        digest(
+          await readFile(resolve(root, privateResource(root, 'jobs'), name)),
+        ),
       ]),
     ),
   );

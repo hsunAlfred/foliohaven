@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  chmod,
   mkdir,
   mkdtemp,
   rm,
@@ -19,9 +20,12 @@ async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'alfred-preview-fingerprint-'));
   fixtures.push(root);
   await mkdir(join(root, 'dist'));
-  await mkdir(join(root, '.alfred/artifacts'), { recursive: true });
+  await mkdir(join(root, '.foliohaven/artifacts'), {
+    recursive: true,
+    mode: 0o700,
+  });
   await writeFile(join(root, 'dist/index.html'), '<p>first</p>');
-  await writeFile(join(root, '.alfred/artifacts/state.json'), '{}');
+  await writeFile(join(root, '.foliohaven/artifacts/state.json'), '{}');
   return root;
 }
 afterEach(async () => {
@@ -31,6 +35,13 @@ afterEach(async () => {
 });
 
 describe('safe preview artifact observation', () => {
+  it('does not cache a private root whose permissions are unsafe', async () => {
+    const root = await fixture();
+    await chmod(join(root, '.foliohaven'), 0o755);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 5000);
+    expect(await capturePreviewFingerprint(root)).toBeUndefined();
+  });
   it('falls back while metadata is recent, reuses a stable fingerprint, and rejects a same-length edit', async () => {
     const root = await fixture();
     expect(await capturePreviewFingerprint(root)).toBeUndefined();

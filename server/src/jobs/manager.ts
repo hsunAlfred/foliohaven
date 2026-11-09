@@ -16,6 +16,7 @@ import {
 import type { Job, JobRetryInput, SafeError } from '@foliohaven/core';
 import type { OperationReceipt } from '../files/types.js';
 import {
+  privateResource,
   atomicJson,
   isMissing,
   readJson,
@@ -183,14 +184,18 @@ export class JobManager {
     });
     if (!lease) throw new JobError('JOB_BUSY', '工作紀錄正由其他程序使用。');
     try {
-      await safeMkdir(this.#root, '.alfred/jobs');
+      await safeMkdir(this.#root, privateResource(this.#root, 'jobs'));
       return await fn();
     } finally {
       await lease.release();
     }
   }
   async #names(): Promise<string[]> {
-    return (await readdir(await safePath(this.#root, '.alfred/jobs')))
+    return (
+      await readdir(
+        await safePath(this.#root, privateResource(this.#root, 'jobs')),
+      )
+    )
       .filter((name) => !name.endsWith('.tmp'))
       .map((name) => {
         if (
@@ -204,7 +209,10 @@ export class JobManager {
   async #read(id: string): Promise<JobRecord> {
     let raw: unknown;
     try {
-      raw = await readJson(this.#root, `.alfred/jobs/${this.#id(id)}.json`);
+      raw = await readJson(
+        this.#root,
+        privateResource(this.#root, `jobs/${this.#id(id)}.json`),
+      );
     } catch (error) {
       if (isMissing(error))
         throw new JobError('JOB_NOT_FOUND', '工作不存在。', 404);
@@ -219,10 +227,14 @@ export class JobManager {
   }
   async #save(value: JobRecord): Promise<void> {
     parseRecord(value);
-    await atomicJson(this.#root, `.alfred/jobs/${value.job.id}.json`, {
-      ...value,
-      job: successfulProgress(value.job),
-    });
+    await atomicJson(
+      this.#root,
+      privateResource(this.#root, `jobs/${value.job.id}.json`),
+      {
+        ...value,
+        job: successfulProgress(value.job),
+      },
+    );
   }
   async #rows(): Promise<JobRow[]> {
     const records: JobRow[] = [];

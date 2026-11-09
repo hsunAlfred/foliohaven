@@ -84,7 +84,7 @@ export class StudioApi {
     if (options.idempotencyKey !== undefined)
       headers.set('Idempotency-Key', options.idempotencyKey);
     if (options.editorId !== undefined)
-      headers.set('x-alfred-editor-id', options.editorId);
+      headers.set('x-foliohaven-editor-id', options.editorId);
     const form = body instanceof FormData;
     if (body !== undefined && !form)
       headers.set('Content-Type', 'application/json');

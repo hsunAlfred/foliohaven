@@ -54,7 +54,7 @@ async function worker(fixture: Awaited<ReturnType<typeof siteWorkspace>>) {
       safe = SafeErrorSchema.parse(
         JSON.parse(
           await readFile(
-            join(fixture.snapshot, '.alfred/build-failure.json'),
+            join(fixture.snapshot, '.foliohaven/build-failure.json'),
             'utf8',
           ),
         ).error,
@@ -68,7 +68,10 @@ async function worker(fixture: Awaited<ReturnType<typeof siteWorkspace>>) {
     );
   }
   return JSON.parse(
-    await readFile(join(fixture.snapshot, '.alfred/build-result.json'), 'utf8'),
+    await readFile(
+      join(fixture.snapshot, '.foliohaven/build-result.json'),
+      'utf8',
+    ),
   ) as {
     schemaVersion: number;
     result: unknown;
@@ -136,7 +139,7 @@ describe('real isolated Astro snapshot renderer', () => {
     expect(Object.keys(tree)).not.toContain('category/notes/1/index.html');
     const index = JSON.parse(
       await readFile(
-        join(fixture.snapshot, '.alfred/render/index.json'),
+        join(fixture.snapshot, '.foliohaven/render/index.json'),
         'utf8',
       ),
     ) as { generation: unknown; articles: { file: string }[] };
@@ -165,7 +168,7 @@ describe('real isolated Astro snapshot renderer', () => {
         try {
           await snapshotRenderer.prepareRenderContext({
             repositoryRoot: fixture.snapshot,
-            contextDirectory: join(fixture.snapshot, '.alfred/render'),
+            contextDirectory: join(fixture.snapshot, '.foliohaven/render'),
             coordinationRoot: fixture.root,
           });
         } finally {
@@ -196,9 +199,9 @@ describe('real isolated Astro snapshot renderer', () => {
       expect(await style.text()).toContain('focus-visible');
       for (const resource of [
         'content/site.json',
-        '.alfred/render/index.json',
-        `.alfred/render/generations/${generation}/home.json`,
-        `.alfred/render/generations/${generation}/index.json`,
+        '.foliohaven/render/index.json',
+        `.foliohaven/render/generations/${generation}/home.json`,
+        `.foliohaven/render/generations/${generation}/index.json`,
         'server/package.json',
         `media/source/${draftImageId}/original.png`,
       ]) {
@@ -350,7 +353,7 @@ describe('real isolated Astro snapshot renderer', () => {
     }
     const prepared = await snapshotRenderer.prepareRenderContext({
       repositoryRoot: fixture.snapshot,
-      contextDirectory: join(fixture.snapshot, '.alfred/probe-render'),
+      contextDirectory: join(fixture.snapshot, '.foliohaven/probe-render'),
       coordinationRoot: fixture.root,
     });
     const validate = () =>
@@ -388,7 +391,7 @@ describe('real isolated Astro snapshot renderer', () => {
     });
     await rm(join(fixture.output, 'source.map'));
     const contextEnv = {
-      ALFRED_RENDER_CONTEXT: join(fixture.snapshot, '.alfred/render'),
+      ALFRED_RENDER_CONTEXT: join(fixture.snapshot, '.foliohaven/render'),
       ALFRED_RENDER_OUTPUT: fixture.output,
     };
     await fixture.run(
@@ -396,7 +399,7 @@ describe('real isolated Astro snapshot renderer', () => {
       contextEnv,
     );
     await rm(fixture.output, { recursive: true });
-    await rm(join(fixture.snapshot, '.alfred/build-result.json'));
+    await rm(join(fixture.snapshot, '.foliohaven/build-result.json'));
     await worker(fixture);
     expect(await treeText(fixture.output)).toEqual(tree);
   }, 240_000);
@@ -423,7 +426,7 @@ describe('real isolated Astro snapshot renderer', () => {
       pathToFileURL(join(fixture.snapshot, 'server/dist/build/render/index.js'))
         .href
     )) as typeof Renderer;
-    const context = join(fixture.snapshot, '.alfred/dev-probe');
+    const context = join(fixture.snapshot, '.foliohaven/dev-probe');
     await writeFile(
       join(fixture.snapshot, 'site/src/pages/rogue.astro'),
       '---\n---\n<p>未登錄頁面</p>',
@@ -457,17 +460,20 @@ describe('real isolated Astro snapshot renderer', () => {
     await expect(
       fixture.run(['--filter', '@foliohaven/site', 'exec', 'astro', 'build'], {
         ALFRED_RENDER_CONTEXT: context,
-        ALFRED_RENDER_OUTPUT: join(fixture.snapshot, '.alfred/invalid-output'),
+        ALFRED_RENDER_OUTPUT: join(
+          fixture.snapshot,
+          '.foliohaven/invalid-output',
+        ),
       }),
     ).rejects.toMatchObject({ code: 'PROCESS_EXITED' });
     await mkdir(join(fixture.root, 'dist'), { recursive: true });
     await writeFile(join(fixture.root, 'dist/index.html'), 'previous artifact');
     await rm(fixture.output, { recursive: true });
-    await rm(join(fixture.snapshot, '.alfred/build-result.json'));
+    await rm(join(fixture.snapshot, '.foliohaven/build-result.json'));
     await expect(worker(fixture)).rejects.toThrow('INVALID_JSON');
     const failure = JSON.parse(
       await readFile(
-        join(fixture.snapshot, '.alfred/build-failure.json'),
+        join(fixture.snapshot, '.foliohaven/build-failure.json'),
         'utf8',
       ),
     ) as { schemaVersion: number; error: unknown };

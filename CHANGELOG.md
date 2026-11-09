@@ -2,6 +2,49 @@
 
 本文件記錄各版本對使用者有影響的功能與使用要求。更新既有網站前，請先閱讀[版本更新與備份](docs/blog/版本更新與備份.md)。
 
+`Unreleased` 收錄尚未發布的變更，發布時移至對應版本。各版本章節保留該版的功能、環境及升級說明；安裝或操作其他版本時，依所選版本的 README 與操作指南執行。
+
+## Unreleased
+
+## 1.1.0
+
+2026-11-09（Asia/Taipei）
+
+Foliohaven 1.1.0 統一系統識別、改善驗證與 Docker 工具鏈，並提供作者與 AI Agent 共用的品質及 SEO 指南。既有文章、頁面、SEO 與媒體功能延續原有契約。
+
+### 識別命名與舊版相容
+
+- 新專案使用 `.foliohaven/`；只有 `.alfred/` 的既有專案繼續沿用舊根，不必搬移。兩者同時存在時只使用 `.foliohaven/`，舊根不讀寫、不合併、不刪除；選定根不合法或資料損壞時報錯，不回退另一套資料。工作執行中偵測到根目錄切換會停止，保留既有紀錄。
+- 呈現資料、輸出位置、快照雜湊及容器版本的環境變數改用 `FOLIOHAVEN_*`，本機服務標頭改用 `x-foliohaven-*`，保留對應舊名稱的讀取。這些環境變數的新名稱存在即優先，包含空字串；新值不合法不回退舊值。新舊標頭衝突或同名重複會拒絕，保留原驗證與來源檢查。
+- Cloudflare 新操作使用 `foliohaven deploy <UUID>`／`foliohaven restore <UUID>` 及 `foliohaven-*` R2 metadata，仍辨識完整舊格式。雙組 metadata 必須完整一致，不混搭或回退掩蓋壞資料；既有物件不因改名批次重傳。舊部署紀錄、備份與指紋維持原樣，受控還原保留備份的原始 metadata。
+- 編譯快取、工作紀錄、Docker 啟動與公開來源排除沿用同一套私有根選擇規則；兩種私有根及實際部署設定不進來源包或公開網站。
+
+### 驗證與 Docker
+
+- 新增 `pnpm verify:quick`：在隔離副本完成格式、lint、型別、完整單元、必要整合及兩個 Chromium 操作案例，供日常修改使用，不更新目前網站。quick 成功不等於完整 `pnpm verify` 或正式發行資格。
+- 完整 `pnpm verify` 保留全部整合與三瀏覽器測試，先處理品質及固定埠案例，再使用獨立副本分片執行。依 CPU、Linux 實際剩餘記憶體與 cgroup 限額控制併行，預設最多兩組重工作；不把 swap 算成可用記憶體，也不以放寬 timeout 或增加重試換取通過。報告保存在選定私有根的 `reports/verification/`。
+- 日常 GitHub Check 與手動完整發行驗收分開。正式發布仍要求最終公開來源、版本、檔案權限、工具鏈及同次完整驗收證據一致，不能沿用 quick、舊成功或其他來源。
+- Docker 在建立相依套件及瀏覽器前對齊 UID／GID，避免晚期遞迴修改整個檔案樹的擁有者；保留非 root、離線啟動與資料保存流程。CI 重用固定的工具鏈層，不將作者私有資料或成功網站放入快取。
+
+### 共通開發與 SEO 指南
+
+- 新增[網站開發與品質標準](https://github.com/hsunAlfred/foliohaven/blob/v1.1.0/docs/blog/%E7%B6%B2%E7%AB%99%E9%96%8B%E7%99%BC%E8%88%87%E5%93%81%E8%B3%AA%E6%A8%99%E6%BA%96.md)，集中說明媒體載入、布局穩定、語意、可及性、閱讀互動、代表頁及交付紀錄。PageSpeed 分數為另行手動量測的開發目標，不是 Build、verify 或 CI 自動評分項目，也不代表隨附網站已達標。
+- 新增[SEO 設定與繼承](https://github.com/hsunAlfred/foliohaven/blob/v1.1.0/docs/blog/SEO%E8%A8%AD%E5%AE%9A%E8%88%87%E7%B9%BC%E6%89%BF.md)，集中說明原有的逐欄繼承、摘要與描述、分享圖、覆寫與恢復操作，區分 Studio 設定提示、正式輸出及人工確認。README、AGENTS 與任務文件連到同一份指南，來源包收錄兩份完整文件。
+
+### 升級與回復
+
+本版沒有文章或網站設定資料模型轉換。由 1.0.0 升級時，先依[版本更新與備份](https://github.com/hsunAlfred/foliohaven/blob/v1.1.0/docs/blog/%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E8%88%87%E5%82%99%E4%BB%BD.md)保留自己的程式、文章、媒體、私有根、成功網站及部署設定，再在副本驗證。不要為了新名稱自行建立第二套私有根；若 `.env` 設有 `RELEASE_VERSION`，更新為 `1.1.0`，並依新版 Dockerfile 重建 image、保留自己的 UID／GID。
+
+相容方向為新版讀取舊資料及識別。降版須還原配對的程式與完整備份，不能只切回舊程式或手工改寫 journal、快照及遠端歸屬標記；雲端發布與還原仍需明確操作及驗證。
+
+### 下載與使用入口
+
+- [foliohaven-1.1.0-source.tar.gz](https://github.com/hsunAlfred/foliohaven/releases/download/v1.1.0/foliohaven-1.1.0-source.tar.gz)
+- [SHA256SUMS](https://github.com/hsunAlfred/foliohaven/releases/download/v1.1.0/SHA256SUMS)
+- [README：安裝、啟動與操作](https://github.com/hsunAlfred/foliohaven/blob/v1.1.0/README.md)
+
+下載後先校驗 SHA256 並解壓到新目錄。原生 Linux 與 Docker 維持同一套使用流程；公開網站仍只交付完整 `dist/`，不需要 Studio、管理 API、資料庫或 Node.js 服務。
+
 ## 1.0.0
 
 Foliohaven 1.0.0 是首個正式版本，提供可直接修改原始碼的靜態網站與部落格系統。你可以自行或透過 AI Agent 製作首頁、About、FAQ 等固定頁面與共用文章版型，再用 Studio 或 IDE 管理文章、圖片、影片與網站設定。新增文章只需 HTML 正文與 JSON 資料，不必逐篇建立 React 或 Astro 元件。
@@ -71,7 +114,7 @@ docker compose up -d --build --wait --wait-timeout 600
 
 ### 從預覽版升級
 
-本次從0.3.1升至1.0.0沒有功能行為、依賴或資料格式變更。既有文章、媒體、網站設定、自訂版型及 Cloudflare 設定可沿用；請先備份完整專案，在副本整合版本差異並驗證，再採用新版。若 `.env` 有 `RELEASE_VERSION`，需改為 `1.0.0`。
+由 0.3.1 升級至 1.0.0 時，沒有功能行為、依賴或資料格式變更。既有文章、媒體、網站設定、自訂版型及 Cloudflare 設定可沿用；請先備份完整專案，在副本整合版本差異並驗證，再採用新版。若 `.env` 有 `RELEASE_VERSION`，需改為 `1.0.0`。
 
 從更早的預覽版升級，請同時閱讀[版本更新與備份](https://github.com/hsunAlfred/foliohaven/blob/v1.0.0/docs/blog/%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E8%88%87%E5%82%99%E4%BB%BD.md)中的歷史相容性說明，不能用新版本範例覆蓋自己的網站。
 

@@ -19,7 +19,12 @@ import {
   type RenderContextIndex,
 } from '@foliohaven/site/registry';
 import { FileRepository } from '../../files/repository.js';
-import { safeMkdir, safePath, RepositoryError } from '../../files/io.js';
+import {
+  privateDirectoryName,
+  safeMkdir,
+  safePath,
+  RepositoryError,
+} from '../../files/io.js';
 import { MediaService } from '../../media/service.js';
 import { MediaError } from '../../media/errors.js';
 import type { PreparedRenderContext, RenderContextOptions } from './types.js';
@@ -68,7 +73,7 @@ async function prepareRenderContextInternal(
   const directory = resolve(options.contextDirectory);
   const resource = relative(root, directory);
   if (
-    !resource.startsWith('.alfred/') ||
+    !resource.startsWith(`${privateDirectoryName(root)}/`) ||
     resource.split('/').some((part) => part === '..' || part === '')
   )
     throw new RenderError(
@@ -224,7 +229,7 @@ export async function invalidateRenderContext(
   const directory = resolve(contextDirectory);
   const resource = relative(root, directory);
   if (
-    !resource.startsWith('.alfred/') ||
+    !resource.startsWith(`${privateDirectoryName(root)}/`) ||
     resource.split('/').some((part) => part === '..' || part === '')
   )
     throw new RenderError(

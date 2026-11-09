@@ -34,6 +34,7 @@ import type { LocalService, LocalServiceOptions } from './types.js';
 import {
   authenticate,
   byteRange,
+  compatibleHeader,
   fail,
   header,
   HttpError,
@@ -120,6 +121,7 @@ export async function createLocalService(
     scanInputs,
     scanWorkspaceInputs,
     htmlCache,
+    close: closeRuntime,
   } = await createLocalRuntime(options);
   const previews = new PreviewStore({
     repository,
@@ -476,11 +478,11 @@ export async function createLocalService(
       }
       if (name === 'previews') {
         // 同一editor生命週期使用固定UUID；與Core文章DTO分離，避免新增尚未保存的識別欄位。
-        const editorId = header(request, 'x-alfred-editor-id');
+        const editorId = compatibleHeader(request, 'editor-id');
         if (!editorId)
           throw new HttpError(
             'EDITOR_ID_REQUIRED',
-            '預覽需要x-alfred-editor-id UUID。',
+            '預覽需要有效的編輯工作階段識別。',
             422,
           );
         const result = await previews.create(await body(), {
@@ -798,8 +800,9 @@ export async function createLocalService(
   try {
     jobs.start();
   } catch (error) {
-    await jobs.close();
-    await operations.close();
+    previews.close();
+    plans.clear();
+    await closeRuntime();
     throw error;
   }
   return {
@@ -842,21 +845,24 @@ export async function createLocalService(
       if (closeTask) return closeTask;
       closing = true;
       closeTask = (async () => {
-        const stopped = new Promise<void>((resolve) => {
-          if (!listening) {
-            resolve();
-            return;
-          }
-          server.close(() => resolve());
-        });
-        for (const controller of controllers) controller.abort();
-        for (const socket of sockets) socket.destroy();
-        await jobs.close();
-        await Promise.allSettled([...requests]);
-        await stopped;
-        previews.close();
-        plans.clear();
-        await operations.close();
+        try {
+          const stopped = new Promise<void>((resolve) => {
+            if (!listening) {
+              resolve();
+              return;
+            }
+            server.close(() => resolve());
+          });
+          for (const controller of controllers) controller.abort();
+          for (const socket of sockets) socket.destroy();
+          await jobs.close();
+          await Promise.allSettled([...requests]);
+          await stopped;
+          previews.close();
+          plans.clear();
+        } finally {
+          await closeRuntime();
+        }
       })();
       return closeTask;
     },

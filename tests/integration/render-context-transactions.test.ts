@@ -97,7 +97,7 @@ async function fixture() {
   };
   for (const [path, value] of Object.entries(files))
     await writeFile(join(root, path), value);
-  const context = join(root, '.alfred/dev/render');
+  const context = join(root, '.foliohaven/dev/render');
   return {
     root,
     context,

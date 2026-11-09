@@ -1,3 +1,4 @@
+import { privateResource } from './workspace-paths.mjs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { managedProcess } from './managed-process.mjs';
@@ -132,8 +133,14 @@ async function start(message) {
       ...process.env,
       ...(task === 'site'
         ? {
-            ALFRED_RENDER_CONTEXT: resolve(root, '.alfred/dev/render'),
-            ALFRED_RENDER_OUTPUT: resolve(root, '.alfred/dev/site-output'),
+            FOLIOHAVEN_RENDER_CONTEXT: resolve(
+              root,
+              privateResource(root, 'dev/render'),
+            ),
+            FOLIOHAVEN_RENDER_OUTPUT: resolve(
+              root,
+              privateResource(root, 'dev/site-output'),
+            ),
           }
         : {}),
     },

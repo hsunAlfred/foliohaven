@@ -9,7 +9,7 @@
 - 可追蹤的小型原始素材及建立素材的程式置於本目錄，按下表責任分組；只在實際有素材時建立分組目錄。不得放入真實認證、個人資料或舊對話內容。
 - 純函式測試使用每個案例自有的物件，驗證呼叫前後輸入未變更；會修改資料的測試須建立獨立沙箱，不能直接使用正式來源作可寫 fixture。
 - 整合測試及工作流程測試透過測試 helper 在系統暫存目錄建立獨立 repository。每個案例取得明確的 `repositoryRoot`（沙箱根目錄）、輸出位置及清理函式，由內部函式參數或測試啟動 options 傳入。**正式 CLI、`pnpm build` 及產品 HTTP API 不提供以環境變數、請求欄位或任意路徑切換至 fixture 的入口。**
-- 沙箱具有自己的 `content/`、`media/source/`、`.alfred/`、`dist/`、交易與工作紀錄。建立交易及 dist 切換資料時使用同一沙箱檔案系統，以實際 rename／fsync／復原行為驗收，不以記憶體模擬代替。
+- 沙箱具有自己的 `content/`、`media/source/`、`.foliohaven/`、`dist/`、交易與工作紀錄。建立交易及 dist 切換資料時使用同一沙箱檔案系統，以實際 rename／fsync／復原行為驗收，不以記憶體模擬代替。
 - 涉及程式的 snapshot／SSG／固定頁測試複製必要來源、設定、manifests 及 lockfile；不複製 live `node_modules` 或建立指回 live Workspace 的連結。需要依賴時，以同一 lockfile 及已暖 pnpm store 在沙箱內離線建立自己的 Workspace links；缺少 cache 就明確失敗。
 - 本機服務與瀏覽器測試由測試協調器啟動專屬程序，以 port=0 由系統指派閒置埠及記憶體 proxy token。正式 dev 協調器的測試則使用真正 4321／5173／3001，啟動前確認空閒、結束後確認釋放。不能沿用不明既有服務；port 衝突須失敗。程序、編碼器、計時器及連線均由建立者在結束時回收。
 - 故障注入僅由測試內部的 I/O、時鐘、程序及階段 hook 提供；仍要核對實際檔案、journal、子程序與回應副作用。測試用 worker 只存在測試來源，不成為產品可選的假成功 worker。
@@ -17,6 +17,12 @@
 - 每個可寫案例於執行前後核對正式來源未變更。正式五篇範例、分類、Tag、媒體及根 `dist/` 不作為沙箱的寫入目的地；測試資料不得加入正式 Content Loader 的公開集合。
 
 固定範例來源位於 [samples/reference](samples/reference/)，由 [samplesWorkspace](samples/workspace.ts) 建立隔離副本；不跟隨作者目前的文章、站名或分類變動。根公開網站的瀏覽器驗收則使用實際來源與 Core 模型形成預期值。固定範例與根公開網站的測試責任分開，新增文章不需要維持五篇或修改驗收斷言。
+
+## 私有目錄與識別相容測試
+
+一般沙箱使用 `.foliohaven/`。相容案例明確建立 `.alfred/` 舊根或新舊雙根：舊根單獨存在時沿用，雙根時只讀寫新根，並核對舊內容未變；兩者皆無時建立新根，無效的新根不回退。相關測試見 [workspace-paths.test.ts](../unit/workspace-paths.test.ts) 與 [workspace-directory-compat.test.ts](../integration/workspace-directory-compat.test.ts)。不要將舊版升級 fixture 的舊名稱整批替換，否則會失去兼容驗證。
+
+HTTP fixture 預設發送 `x-foliohaven-*`；需要舊請求時以 `legacyHeaders: true` 明確建立。協定測試另驗新舊一致、衝突及重複 headers；Cloudflare fixture 保留原始舊標記與 metadata，以核對新版能查詢及還原舊證據。這些 fixture 不含真實認證，不連正式雲端寫入。
 
 ## Fixture 分組與驗收責任
 
@@ -82,7 +88,7 @@
 
 - 有效素材：五篇正式範例的隔離副本、完整固定／文章／分類／Tag 路由、真實處理媒體、共同 ArticlePage／CSS、空集合、noindex Published、GSC 有／無、slug／分類改名，以及中文／Unicode／大小寫／多詞搜尋。
 - 錯誤／故障素材：無 JavaScript、手機與桌面、鍵盤導航、缺媒體／斷連結、搜尋 q 超長、page 非法／超界／重複、索引 404／壞 JSON／未知 version、history 前後移動。
-- 核對結果：一般頁及所有靜態分頁有完整初始 HTML／TOC／正常 anchor；搜尋頁只有預設第一頁的無 JS fallback。Head／canonical／JSON-LD／RSS discovery 完整，noindex 仍公開、RSS／搜尋保留；Sitemap 排除草稿、noindex、空列表、404 與 query 變體。RSS 每篇只有一個穩定非 URL GUID，日期與排序不注入 Build 時間；搜尋正規化、多詞 OR、分類／Tag 組合條件、hydration 初始一致及 URL 還原符合契約。
+- 核對結果：一般頁及所有靜態分頁有完整初始 HTML／TOC／正常 anchor；搜尋頁只有預設第一頁的無 JS fallback。Head／canonical／JSON-LD／RSS discovery 完整，noindex 仍公開、RSS／搜尋保留；Sitemap 排除草稿、noindex、404 與 query 變體；公開文章集合為空的單一分類／Tag 頁強制 noindex，不能將這條規則擴大成所有空列表都不索引。RSS 每篇只有一個穩定非 URL GUID，日期與排序不注入 Build 時間；搜尋正規化、多詞 OR、分類／Tag 組合條件、hydration 初始一致及 URL 還原符合契約。
 - 正式五篇驗證首頁兩個分類入口、notes 3／tools 2、example Tag 4、每頁 2、至少兩篇同發布時間及第四篇 noindex；共五篇文章 HTML、RSS／索引五筆、Sitemap 四個文章 URL。此組可只讀檢查正式 Build 產物；需修改的情境使用副本。
 
 ### Workflows：Studio、文章與獨立頁面
@@ -111,6 +117,8 @@
 此表只對照**目前存在的檔案與可執行指令**，不表示每個入口已執行或整個 ID 已通過。實際命令、結果、環境與未執行範圍仍以當次實際執行紀錄為準；不能用測試檔存在、局部篩選通過或 fixture Build 取代完整驗收。
 
 `tests/unit/` 使用 `pnpm exec vitest run --project unit <檔案>`；`tests/integration/` 使用 `pnpm exec vitest run --project integration <檔案>`；`tests/e2e/` 使用 `pnpm exec playwright test <檔案>`，依根設定執行三瀏覽器。以下鏈結皆相對於本檔案。
+
+單獨執行 E2E 前，先成功執行正式 `pnpm build`，讓根 `dist/` 與受測來源一致；完整 `pnpm verify` 已包含這個順序。服務、固定埠及隔離條件依 [README](../../README.md#修改後如何檢查)準備，不能在活動作者環境內直接啟動完整驗證。
 
 | 驗收 ID      | 主要測試檔／操作入口                                                                                                                                                                                                                                                                                                                                                               | 核對界線                                                                                                 |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |

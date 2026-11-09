@@ -13,6 +13,7 @@ const excluded = new Set([
   'node_modules',
   'dist',
   '.astro',
+  '.foliohaven',
   '.alfred',
   '.vite',
 ]);

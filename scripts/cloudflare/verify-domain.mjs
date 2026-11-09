@@ -1,3 +1,4 @@
+import { privateResource } from '../workspace-paths.mjs';
 import { lookup as lookupAddress } from 'node:dns/promises';
 import { request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
@@ -273,7 +274,7 @@ function publicPath(path) {
 }
 function fallbackPath(manifest, deploymentId) {
   const occupied = new Set(manifest.map((file) => file.path.split('/')[0]));
-  const prefix = `__alfred_not_found_${deploymentId}`;
+  const prefix = `__foliohaven_not_found_${deploymentId}`;
   let suffix = 0;
   while (occupied.has(prefix + (suffix ? `_${suffix}` : ''))) suffix++;
   return '/' + prefix + (suffix ? `_${suffix}` : '') + '/';
@@ -421,7 +422,10 @@ async function browserChecks(
   const { chromium, firefox, webkit } = await import('@playwright/test');
   const screenshots = await privateDirectory(
     context.repositoryRoot,
-    `.alfred/reports/cloudflare/${context.deploymentId}/screenshots`,
+    privateResource(
+      context.repositoryRoot,
+      `reports/cloudflare/${context.deploymentId}/screenshots`,
+    ),
   );
   const filesByUrl = new Map(
     context.manifest.map((file) => [publicPath(file.path), file]),
@@ -650,7 +654,7 @@ async function browserChecks(
               if (typeof element.requestVideoFrameCallback !== 'function')
                 throw new Error('decoded frame callback unavailable');
               const frames = { count: 0, mediaTime: -1 };
-              element.__alfredVerificationFrames = frames;
+              element.__foliohavenVerificationFrames = frames;
               const observe = (_time, metadata) => {
                 frames.count++;
                 frames.mediaTime = metadata.mediaTime;
@@ -677,8 +681,8 @@ async function browserChecks(
                     video.readyState >= 2 &&
                     video.error === null &&
                     video.currentTime > 0.02 &&
-                    video.__alfredVerificationFrames.count > 0 &&
-                    video.__alfredVerificationFrames.mediaTime > 0.02,
+                    video.__foliohavenVerificationFrames.count > 0 &&
+                    video.__foliohavenVerificationFrames.mediaTime > 0.02,
                 ),
               url,
             );
@@ -709,7 +713,7 @@ async function browserChecks(
               { src: url, target: seek },
             );
             const resumed = await video.evaluate(async (element) => {
-              const frames = element.__alfredVerificationFrames.count;
+              const frames = element.__foliohavenVerificationFrames.count;
               const target = element.currentTime;
               const advance = Math.min(0.12, (element.duration - target) / 3);
               await Promise.race([
@@ -729,8 +733,8 @@ async function browserChecks(
                     video.error === null &&
                     !video.seeking &&
                     video.currentTime > target + advance &&
-                    video.__alfredVerificationFrames.count > frames &&
-                    video.__alfredVerificationFrames.mediaTime >
+                    video.__foliohavenVerificationFrames.count > frames &&
+                    video.__foliohavenVerificationFrames.mediaTime >
                       target + advance / 2,
                 ),
               { src: url, ...resumed },
@@ -782,7 +786,7 @@ async function browserChecks(
                 'CLOUDFLARE_BROWSER_SEARCH_FAILED',
                 '搜尋未顯示索引中的已發布文章。',
               );
-            const absent = `__alfred_no_result_${context.deploymentId}`;
+            const absent = `__foliohaven_no_result_${context.deploymentId}`;
             await query.fill(absent);
             await query.press('Enter');
             await page.waitForFunction((expected) => {
@@ -869,7 +873,10 @@ export function createDomainVerifier({
       resolve(context.root) !==
         resolve(
           context.repositoryRoot,
-          `.alfred/deployments/${context.deploymentId}`,
+          privateResource(
+            context.repositoryRoot,
+            `deployments/${context.deploymentId}`,
+          ),
         ) ||
       !(
         context.journal?.uploadStatus === 'uploaded' ||
@@ -1242,8 +1249,9 @@ export function createDomainVerifier({
         return { noindexPages: noindex.size, sitemapUrls: sitemapUrls.length };
       });
       for (const path of [
-        `/__alfred-missing-${context.deploymentId}/`,
-        `/assets/__alfred-missing-${context.deploymentId}`,
+        `/__foliohaven-missing-${context.deploymentId}/`,
+        `/assets/__foliohaven-missing-${context.deploymentId}`,
+        '/.foliohaven/',
         '/.alfred/',
         '/content/site.json',
       ])

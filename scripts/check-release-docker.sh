@@ -9,7 +9,8 @@ command -v node >/dev/null || { printf '%s\n' '發行工程驗收需要 Node.js�
 [[ "$(id -u)" != 0 ]] || { printf '%s\n' '請以非 root 主機使用者執行。' >&2; exit 1; }
 release_workspace="$(mktemp -d "${TMPDIR:-/tmp}/foliohaven-release-check.XXXXXXXX")"
 release_project="foliohaven-release-check-$$"
-release_reports="$release_source/.alfred/reports/release-docker-host"
+release_private_root="$(node --input-type=module -e 'const {privateDirectoryName} = await import(process.argv[1]); process.stdout.write(privateDirectoryName(process.argv[2]));' "$release_source/scripts/workspace-paths.mjs" "$release_source")"
+release_reports="$release_source/$release_private_root/reports/release-docker-host"
 mkdir -p "$release_reports"
 release_report="$(mktemp -d "$release_reports/$release_project.XXXXXXXX")"
 release_log="$release_report/compose.log"
@@ -24,7 +25,7 @@ unset COMPOSE_FILE COMPOSE_PROFILES COMPOSE_ENV_FILES COMPOSE_PROJECT_NAME \
 export COMPOSE_DISABLE_ENV_FILE=1
 compose() {
   docker compose --project-directory "$release_workspace" \
-    --env-file "$release_workspace/.alfred/compose.env" \
+    --env-file "$release_workspace/.foliohaven/compose.env" \
     -f "$release_workspace/docker-compose.yml" -p "$release_project" "$@"
 }
 log() {
@@ -77,8 +78,8 @@ finish() {
       log "公開來源副本尚未就緒；未啟動 Docker，保留工作副本 $release_workspace。"
     fi
   fi
-  if [[ -d "$release_workspace/.alfred/reports/release-docker-check" ]]; then
-    cp -R "$release_workspace/.alfred/reports/release-docker-check" "$release_report/"
+  if [[ -d "$release_workspace/.foliohaven/reports/release-docker-check" ]]; then
+    cp -R "$release_workspace/.foliohaven/reports/release-docker-check" "$release_report/"
     local release_copy_code=$?
     if [[ "$release_code" == 0 && "$release_copy_code" != 0 ]]; then
       release_code=$release_copy_code
@@ -105,9 +106,9 @@ log "即時日誌：$release_log"
 phase '[1/12] 建立乾淨來源副本'
 run_logged node "$release_source/scripts/package-release.mjs" --directory "$release_workspace" --source "$release_source"
 cd "$release_workspace"
-mkdir -m 700 .alfred
-: > .alfred/compose.env
-printf '%s\n' '{"schemaVersion":1,"purpose":"release-validation"}' > .alfred/release-check-workspace.json
+mkdir -m 700 .foliohaven
+: > .foliohaven/compose.env
+printf '%s\n' '{"schemaVersion":1,"purpose":"release-validation"}' > .foliohaven/release-check-workspace.json
 export LOCAL_UID="$(id -u)"
 export LOCAL_GID="$(id -g)"
 export RELEASE_IMAGE_NAME="$release_project"
@@ -134,18 +135,20 @@ run_logged compose -f "$release_workspace/.devcontainer/docker-compose.yml" conf
 # Export as tar so the non-root host owns the extracted files even with a
 # different UID from the builder image. The output stays outside Docker context.
 phase '[3/12] 建置並匯出靜態網站（Docker 建置沒有固定總時限）'
-run_logged docker build --progress plain --target dist-export --output "type=tar,dest=$release_workspace/.alfred/dist-export.tar" .
+run_logged docker build --progress plain --target dist-export \
+  --build-arg "LOCAL_UID=$LOCAL_UID" --build-arg "LOCAL_GID=$LOCAL_GID" \
+  --output "type=tar,dest=$release_workspace/.foliohaven/dist-export.tar" .
 phase '[4/12] 檢查靜態輸出與私有檔案排除'
-mkdir -m 700 .alfred/export-check
-tar --no-same-owner -xf .alfred/dist-export.tar -C .alfred/export-check
+mkdir -m 700 .foliohaven/export-check
+tar --no-same-owner -xf .foliohaven/dist-export.tar -C .foliohaven/export-check
 for release_file in index.html 404.html rss.xml search-index.json sitemap-index.xml robots.txt; do
-  [[ -s ".alfred/export-check/$release_file" ]] || { printf '靜態輸出缺少檔案：%s\n' "$release_file" >&2; exit 1; }
+  [[ -s ".foliohaven/export-check/$release_file" ]] || { printf '靜態輸出缺少檔案：%s\n' "$release_file" >&2; exit 1; }
 done
-for release_private in .git .alfred .codex node_modules content media/source studio server; do
-  [[ ! -e ".alfred/export-check/$release_private" ]] || { printf '靜態輸出包含私有來源：%s\n' "$release_private" >&2; exit 1; }
+for release_private in .git .foliohaven .alfred .codex node_modules content media/source studio server; do
+  [[ ! -e ".foliohaven/export-check/$release_private" ]] || { printf '靜態輸出包含私有來源：%s\n' "$release_private" >&2; exit 1; }
 done
-[[ -z "$(find .alfred/export-check -type l -print -quit)" ]] || { printf '%s\n' '靜態輸出不應包含符號連結。' >&2; exit 1; }
-find .alfred/export-check -type f -print | sort > "$release_report/dist-export-files.txt"
+[[ -z "$(find .foliohaven/export-check -type l -print -quit)" ]] || { printf '%s\n' '靜態輸出不應包含符號連結。' >&2; exit 1; }
+find .foliohaven/export-check -type f -print | sort > "$release_report/dist-export-files.txt"
 phase '[5/12] 建置並首次啟動 release（啟動等待最多600秒）'
 run_logged compose up -d --build --wait --wait-timeout 600
 phase '[6/12] 檢查主機三個網址與 API 邊界'

@@ -1,6 +1,6 @@
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
-import { safePath } from '../files/io.js';
+import { privateResource, safePath } from '../files/io.js';
 import { MediaError } from './errors.js';
 import type { Binding, MediaFile } from './types.js';
 
@@ -22,7 +22,10 @@ export async function openMediaVariant(
   if (output === undefined)
     throw new MediaError('MEDIA_NOT_FOUND', '媒體變體不存在。', 404);
   const handle = await open(
-    await safePath(root, `.alfred/media/${binding.processingHash}/${variant}`),
+    await safePath(
+      root,
+      privateResource(root, `media/${binding.processingHash}/${variant}`),
+    ),
     constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
   );
   try {

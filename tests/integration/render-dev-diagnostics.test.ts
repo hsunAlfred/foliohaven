@@ -43,10 +43,11 @@ async function fixture(kind: string) {
     join(root, 'package.json'),
     JSON.stringify({ type: 'module' }),
   );
-  await cp(
-    join(repository, 'scripts/render-dev.mjs'),
-    join(root, 'scripts/render-dev.mjs'),
-  );
+  for (const script of ['render-dev.mjs', 'workspace-paths.mjs'])
+    await cp(
+      join(repository, 'scripts', script),
+      join(root, 'scripts', script),
+    );
   const module = join(root, 'node_modules/@foliohaven/server');
   await writeFile(
     join(module, 'package.json'),
@@ -223,8 +224,14 @@ describe('safe render child diagnostics and cancellation', () => {
   it('cancels the backoff without invalidating the previous complete context', async () => {
     const f = await fixture('busy');
     const original = '{"status":"valid","generation":"previous"}';
-    await mkdir(join(f.root, '.alfred/dev/render'), { recursive: true });
-    await writeFile(join(f.root, '.alfred/dev/render/index.json'), original);
+    await mkdir(join(f.root, '.foliohaven/dev/render'), {
+      recursive: true,
+      mode: 0o700,
+    });
+    await writeFile(
+      join(f.root, '.foliohaven/dev/render/index.json'),
+      original,
+    );
     const controller = new AbortController();
     let output = '';
     const running = f.run(['--once'], controller.signal, (text) => {
@@ -244,7 +251,7 @@ describe('safe render child diagnostics and cancellation', () => {
       expect.objectContaining({ code: 'OPERATION_CANCELLED', cancelled: true }),
     );
     expect(
-      await readFile(join(f.root, '.alfred/dev/render/index.json'), 'utf8'),
+      await readFile(join(f.root, '.foliohaven/dev/render/index.json'), 'utf8'),
     ).toBe(original);
     await expect(
       readFile(join(f.root, 'invalidated.txt')),

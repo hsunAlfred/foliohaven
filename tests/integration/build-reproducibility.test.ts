@@ -31,7 +31,7 @@ async function build(root: string) {
           jobId = UuidSchema.parse(event['jobId']);
       }
       if (!jobId || snapshotRoot) return;
-      const candidate = join(root, '.alfred/builds', jobId, 'snapshot');
+      const candidate = join(root, '.foliohaven/builds', jobId, 'snapshot');
       try {
         const stat = lstatSync(candidate);
         if (stat.isDirectory() && !stat.isSymbolicLink())
@@ -57,11 +57,13 @@ async function build(root: string) {
   expect(snapshotRoot, '必須觀察到本輪真實snapshot目錄').toBeDefined();
   if (!success || !jobId || !snapshotRoot)
     throw new Error('REAL_BUILD_PROOF_MISSING');
-  expect(snapshotRoot).toBe(join(root, '.alfred/builds', jobId, 'snapshot'));
+  expect(snapshotRoot).toBe(
+    join(root, '.foliohaven/builds', jobId, 'snapshot'),
+  );
   expect(success['jobId']).toBe(jobId);
   const journal = JSON.parse(
     await readFile(
-      join(root, '.alfred/artifacts', jobId, 'journal.json'),
+      join(root, '.foliohaven/artifacts', jobId, 'journal.json'),
       'utf8',
     ),
   ) as { result: unknown };
@@ -141,7 +143,7 @@ it('BUILD-03: two real CLI builds with distinct snapshot roots preserve every te
     const manifest = async (id: string) =>
       JSON.parse(
         await readFile(
-          join(fixture.root, '.alfred/builds', id, 'input-manifest.json'),
+          join(fixture.root, '.foliohaven/builds', id, 'input-manifest.json'),
           'utf8',
         ),
       ) as unknown;

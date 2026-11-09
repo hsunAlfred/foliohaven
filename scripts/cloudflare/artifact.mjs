@@ -48,9 +48,14 @@ export function splitManifest(artifact, config) {
       !validPath(entry.path) ||
       parts.some(
         (part) =>
-          ['.git', '.alfred', '.codex', 'node_modules', '.wrangler'].includes(
-            part,
-          ) || part.startsWith('.env'),
+          [
+            '.git',
+            '.foliohaven',
+            '.alfred',
+            '.codex',
+            'node_modules',
+            '.wrangler',
+          ].includes(part) || part.startsWith('.env'),
       ) ||
       /\.(?:pem|key|map)$/i.test(entry.path) ||
       ['_headers', '_redirects', 'cloudflare.config.json'].includes(entry.path)

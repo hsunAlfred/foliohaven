@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { ApiErrorSchema } from '@foliohaven/core';
 import {
   call,
+  article,
   origin,
   sandbox,
   start,
@@ -38,6 +39,90 @@ async function raw(message: string): Promise<string> {
   });
 }
 describe('API-02：HTTP傳輸上限、timeout與中斷', () => {
+  it('新舊標頭各自可用，同時提供一致值仍可建立即時預覽', async () => {
+    for (const names of [
+      ['x-foliohaven'],
+      ['x-alfred'],
+      ['x-foliohaven', 'x-alfred'],
+    ]) {
+      const editorId = randomUUID();
+      const headers = Object.fromEntries(
+        names.flatMap((prefix) => [
+          [`${prefix}-process-token`, token],
+          [`${prefix}-studio-origin`, origin],
+          [`${prefix}-editor-id`, editorId],
+        ]),
+      );
+      const preview = await call(running, '/api/v1/previews', {
+        authorized: false,
+        legacyHeaders: names[0] === 'x-alfred',
+        method: 'POST',
+        body: article(),
+        headers,
+      });
+      expect(preview.status, JSON.stringify(preview.body)).toBe(201);
+    }
+  });
+  it('新舊驗證、來源及editor標頭矛盾一律拒絕，不以舊值掩蓋無效新值', async () => {
+    const editorId = randomUUID();
+    for (const headers of [
+      { 'x-alfred-process-token': 'wrong' },
+      {
+        'x-foliohaven-process-token': '',
+        'x-alfred-process-token': token,
+      },
+      { 'x-alfred-studio-origin': 'https://attacker.invalid' },
+      {
+        'x-foliohaven-studio-origin': '',
+        'x-alfred-studio-origin': origin,
+      },
+      { 'x-alfred-editor-id': randomUUID() },
+      { 'x-foliohaven-editor-id': '', 'x-alfred-editor-id': editorId },
+    ]) {
+      const result = await call(running, '/api/v1/previews', {
+        method: 'POST',
+        body: article(),
+        headers: { 'x-foliohaven-editor-id': editorId, ...headers },
+      });
+      expect(result.status).toBe(400);
+      expect(ApiErrorSchema.parse(result.body).error.code).toBe(
+        'CONFLICTING_HEADER',
+      );
+    }
+    for (const prefix of ['x-foliohaven', 'x-alfred']) {
+      const wrongToken = await call(running, '/api/v1/workspace', {
+        authorized: false,
+        headers: { [`${prefix}-process-token`]: 'wrong' },
+      });
+      expect(wrongToken.status).toBe(403);
+      expect(ApiErrorSchema.parse(wrongToken.body).error.code).toBe(
+        'SERVICE_FORBIDDEN',
+      );
+    }
+  });
+  it('有效新標頭不能掩蓋重複舊標頭，新舊三類標頭皆保留重複檢查', async () => {
+    const editorId = randomUUID();
+    const values = {
+      'process-token': token,
+      'studio-origin': origin,
+      'editor-id': editorId,
+    };
+    const headers = ['x-foliohaven', 'x-alfred']
+      .flatMap((prefix) =>
+        Object.entries(values).map(
+          ([suffix, value]) => `${prefix}-${suffix}: ${value}`,
+        ),
+      )
+      .join('\r\n');
+    for (const prefix of ['x-foliohaven', 'x-alfred'])
+      for (const [suffix, value] of Object.entries(values)) {
+        const duplicate = await raw(
+          `POST /api/v1/previews HTTP/1.1\r\nHost: 127.0.0.1\r\nOrigin: ${origin}\r\n${headers}\r\n${prefix}-${suffix}: ${value}\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}`,
+        );
+        expect(duplicate).toContain('400 Bad Request');
+        expect(duplicate).toContain('DUPLICATE_HEADER');
+      }
+  });
   it('16KiB header硬上限431，重複token不取第一值繞過驗證', async () => {
     const large = await call(running, '/api/v1/workspace', {
       headers: { 'x-too-large': 'x'.repeat(17 * 1024) },
@@ -196,13 +281,13 @@ describe('API-02：HTTP傳輸上限、timeout與中斷', () => {
     );
     connection.write(Buffer.alloc(1024, 1));
     await waitFor(
-      async () => readdir(join(root, '.alfred/staging')).catch(() => []),
+      async () => readdir(join(root, '.foliohaven/staging')).catch(() => []),
       (names) => names.length > 0,
     );
     connection.destroy();
     await closed;
     await waitFor(
-      async () => readdir(join(root, '.alfred/staging')),
+      async () => readdir(join(root, '.foliohaven/staging')),
       (names) => names.length === 0,
     );
     expect(await readdir(join(root, 'media/source'))).toEqual([]);

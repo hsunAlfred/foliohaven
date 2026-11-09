@@ -224,7 +224,7 @@ describe('read-only Astro development media middleware', () => {
       `/media/${image.id}/unknown.webp`,
       '/media/00000000-0000-4000-8000-000000000000/image.webp',
       `/media/source/${image.id}/original.png`,
-      '/media/%2e%2e%2f.alfred/index.json',
+      '/media/%2e%2e%2f.foliohaven/index.json',
     ]) {
       const response = await fetch(origin + invalid);
       expect(response.status).toBe(404);

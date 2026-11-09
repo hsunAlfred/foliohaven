@@ -1,3 +1,5 @@
+import { privateResource } from '../../scripts/workspace-paths.mjs';
+import { ensurePrivateDirectory } from '../../scripts/private-directory.mjs';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { request } from 'node:http';
@@ -29,9 +31,12 @@ const unusedImageId = '45678901-1234-4345-8345-123456789abc';
 const imagePath = `/media/${publishedImageId}/image.webp`;
 const videoPath = `/media/${videoId}/video.webm`;
 const posterPath = `/media/${videoId}/poster.webp`;
-const reportDirectory = fileURLToPath(
-  new URL('../../.alfred/reports/astro-dev-media-20261024/', import.meta.url),
+const repository = fileURLToPath(new URL('../../', import.meta.url));
+const reportResource = privateResource(
+  repository,
+  'reports/astro-dev-media-20261024',
 );
+const reportDirectory = join(repository, reportResource);
 const observations: {
   method: string;
   path: string;
@@ -50,7 +55,7 @@ let environment: Awaited<ReturnType<typeof mediaWorkspace>>;
 async function mediaWorkspace(sourceRoot: string) {
   const fixture = await siteWorkspace(false, sourceRoot);
   try {
-    const contextDirectory = join(fixture.snapshot, '.alfred/render');
+    const contextDirectory = join(fixture.snapshot, '.foliohaven/render');
     const renderer = (await import(
       pathToFileURL(join(fixture.snapshot, 'server/dist/build/render/index.js'))
         .href
@@ -157,11 +162,11 @@ async function mediaWorkspace(sourceRoot: string) {
 beforeAll(async () => {
   sources = await captureSiteWorkspaceSources();
   environment = await mediaWorkspace(sources.root);
-  await mkdir(reportDirectory, { recursive: true, mode: 0o700 });
+  ensurePrivateDirectory(repository, reportResource);
 });
 afterAll(async () => {
   try {
-    await mkdir(reportDirectory, { recursive: true, mode: 0o700 });
+    ensurePrivateDirectory(repository, reportResource);
     await writeFile(
       join(reportDirectory, 'http-observations.json'),
       JSON.stringify(
@@ -346,7 +351,10 @@ describe('isolated real Astro development media', () => {
       }
       const video = fullFiles.get(videoPath);
       if (video === undefined) throw new Error('VIDEO_FIXTURE_MISSING');
-      const downloaded = join(environment.snapshot, '.alfred/downloaded.webm');
+      const downloaded = join(
+        environment.snapshot,
+        '.foliohaven/downloaded.webm',
+      );
       await writeFile(downloaded, video);
       const probe = await runControlledProcess({
         command: 'ffprobe',
@@ -484,8 +492,8 @@ describe('isolated real Astro development media', () => {
         `/media/${publishedImageId}/%252e%252e%252fcontent%252fsite.json`,
         `/@fs${environment.snapshot}/content/site.json?raw`,
         `/@fs${environment.snapshot}/media/source/${draftImageId}/original.png`,
-        `/@fs${environment.snapshot}/.alfred/render/index.json?raw`,
-        `/@fs${environment.snapshot}/.alfred/media-records/${publishedImageId}.json?raw`,
+        `/@fs${environment.snapshot}/.foliohaven/render/index.json?raw`,
+        `/@fs${environment.snapshot}/.foliohaven/media-records/${publishedImageId}.json?raw`,
       ]) {
         const response = await call(origin, path);
         expect([403, 404], path).toContain(response.status);

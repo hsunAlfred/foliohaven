@@ -170,7 +170,7 @@ describe('MEDIA-01: real source transactions, Sharp and FFmpeg', () => {
     expect(
       await readFile(join(root, 'media/source', asset.id, 'original.png')),
     ).toEqual(bytes);
-    expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
     expect(
       await repository.withConsistentRead((session) =>
         service.manifest(undefined, session),
@@ -323,7 +323,7 @@ describe('MEDIA-01: real source transactions, Sharp and FFmpeg', () => {
     expect(a.outputs[0]?.sha256).toBe(b.outputs[0]?.sha256);
     expect(b.outputs[0]?.publicPath).toContain(second.value.id);
     expect(
-      (await readdir(join(root, '.alfred/media'))).filter((name) =>
+      (await readdir(join(root, '.foliohaven/media'))).filter((name) =>
         /^[a-f0-9]{64}$/u.test(name),
       ),
     ).toHaveLength(1);
@@ -332,10 +332,10 @@ describe('MEDIA-01: real source transactions, Sharp and FFmpeg', () => {
     const { root, repository, service } = await fixture();
     const source = await add(service, await png(64, 32));
     const first = await service.process(source.value.id);
-    const hash = (await readdir(join(root, '.alfred/media')))[0];
+    const hash = (await readdir(join(root, '.foliohaven/media')))[0];
     expect(hash).toBeDefined();
     await writeFile(
-      join(root, '.alfred/media', hash ?? '', 'image.webp'),
+      join(root, '.foliohaven/media', hash ?? '', 'image.webp'),
       'broken',
     );
     expect((await service.get(source.value.id)).value.asset).toBeNull();
@@ -477,7 +477,7 @@ describe('MEDIA-02: failure boundaries and actual resource ownership', () => {
         add(service, await png(16, 8), filename, mimeType),
       ).rejects.toMatchObject({ status: 422 });
       expect(await readdir(join(root, 'media/source'))).toEqual([]);
-      expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+      expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
     },
   );
   it('rejects fake SVG, unsupported formats, pixel/dimension and byte excess', async () => {
@@ -497,7 +497,7 @@ describe('MEDIA-02: failure boundaries and actual resource ownership', () => {
         mimeType: 'image/png',
       }),
     ).rejects.toMatchObject({ status: 413 });
-    expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
   });
   it('validates all Range forms, rejects unsatisfiable/multiple requests and private filenames', async () => {
     const { service } = await fixture();
@@ -572,9 +572,9 @@ describe('MEDIA-02: failure boundaries and actual resource ownership', () => {
       expect(lease).not.toBeNull();
       await lease?.release();
     }
-    expect(await readdir(join(root, '.alfred/media-work'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/media-work'))).toEqual([]);
     expect(
-      (await readdir(join(root, '.alfred/media'))).filter((name) =>
+      (await readdir(join(root, '.foliohaven/media'))).filter((name) =>
         name.endsWith('.part'),
       ),
     ).toEqual([]);

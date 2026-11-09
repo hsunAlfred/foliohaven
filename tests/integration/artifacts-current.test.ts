@@ -33,7 +33,7 @@ async function build(
   bytes = letter,
 ) {
   const id = randomUUID();
-  const directory = join(root, '.alfred/builds', id, 'output');
+  const directory = join(root, '.foliohaven/builds', id, 'output');
   await mkdir(directory, { recursive: true, mode: 0o700 });
   await writeFile(join(directory, 'index.html'), bytes);
   return store.promote(id, {
@@ -64,7 +64,10 @@ async function journal(
   id: string,
 ): Promise<Record<string, unknown>> {
   return JSON.parse(
-    await readFile(join(root, '.alfred/artifacts', id, 'journal.json'), 'utf8'),
+    await readFile(
+      join(root, '.foliohaven/artifacts', id, 'journal.json'),
+      'utf8',
+    ),
   ) as Record<string, unknown>;
 }
 async function changeJournal(
@@ -75,7 +78,7 @@ async function changeJournal(
   const value = await journal(root, id);
   change(value);
   await writeFile(
-    join(root, '.alfred/artifacts', id, 'journal.json'),
+    join(root, '.foliohaven/artifacts', id, 'journal.json'),
     JSON.stringify(value),
   );
 }
@@ -121,7 +124,7 @@ describe('currently installed artifact provenance', () => {
     const c = await build(root, reopened, 'c');
     expect((await journal(root, c.jobId)).baseBuildId).toBe(a.jobId);
     await expect(
-      lstat(join(root, '.alfred/artifacts', a.jobId, 'prepared')),
+      lstat(join(root, '.foliohaven/artifacts', a.jobId, 'prepared')),
     ).rejects.toMatchObject({ code: 'ENOENT' });
     expect(await reopened.committedProof(a.jobId)).toEqual(a);
     await resolve(reopened, c.jobId, 'restore-backup');
@@ -197,10 +200,13 @@ describe('currently installed artifact provenance', () => {
       const b = await build(root, store, 'b');
       await resolve(store, b.jobId, 'restore-backup');
       if (kind === 'missing')
-        await rm(join(root, '.alfred/artifacts', a.jobId, 'journal.json'));
+        await rm(join(root, '.foliohaven/artifacts', a.jobId, 'journal.json'));
       else {
         const state = JSON.parse(
-          await readFile(join(root, '.alfred/artifacts/state.json'), 'utf8'),
+          await readFile(
+            join(root, '.foliohaven/artifacts/state.json'),
+            'utf8',
+          ),
         ) as { currentJournalId: string };
         await changeJournal(root, state.currentJournalId, (value) => {
           value.preparedBuildId = b.jobId;

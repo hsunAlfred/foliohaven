@@ -1,7 +1,7 @@
 import { fixedPages, pageSchemas } from '@foliohaven/site/registry';
 import { HtmlProcessingCache } from '@foliohaven/core';
 import { FileRepository } from '../files/index.js';
-import { RepositoryError } from '../files/io.js';
+import { pinPrivateDirectory, RepositoryError } from '../files/io.js';
 import { ContentService } from '../content/index.js';
 import { MediaService } from '../media/index.js';
 import { ArtifactStore } from '../build/artifacts/index.js';
@@ -28,10 +28,24 @@ export interface LocalRuntime {
   readonly scanInputs: (signal?: AbortSignal) => Promise<string>;
   readonly scanWorkspaceInputs: (signal?: AbortSignal) => Promise<string>;
   readonly htmlCache: HtmlProcessingCache;
+  close(): Promise<void>;
 }
 /** HTTP及CLI共享實際服務與三種handler；完成復原但由呼叫端決定排程範圍。 */
 export async function createLocalRuntime(
   options: LocalRuntimeOptions,
+): Promise<LocalRuntime> {
+  const unpinDirectory = pinPrivateDirectory(options.repositoryRoot);
+  try {
+    return await createPinnedRuntime(options, unpinDirectory);
+  } catch (error) {
+    unpinDirectory();
+    throw error;
+  }
+}
+
+async function createPinnedRuntime(
+  options: LocalRuntimeOptions,
+  unpinDirectory: () => void,
 ): Promise<LocalRuntime> {
   const repository = new FileRepository({
     repositoryRoot: options.repositoryRoot,
@@ -144,6 +158,7 @@ export async function createLocalRuntime(
     await operations.close();
     throw error;
   }
+  let closeTask: Promise<void> | undefined;
   return {
     repository,
     artifacts,
@@ -155,5 +170,19 @@ export async function createLocalRuntime(
     scanInputs,
     scanWorkspaceInputs,
     htmlCache,
+    close() {
+      closeTask ??= (async () => {
+        try {
+          await jobs.close();
+        } finally {
+          try {
+            await operations.close();
+          } finally {
+            unpinDirectory();
+          }
+        }
+      })();
+      return closeTask;
+    },
   };
 }

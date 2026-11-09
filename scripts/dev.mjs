@@ -1,3 +1,4 @@
+import { privateResource } from './workspace-paths.mjs';
 import { randomBytes } from 'node:crypto';
 import { watch } from 'node:fs';
 import { rm } from 'node:fs/promises';
@@ -195,9 +196,10 @@ try {
     if (stopped.signal.aborted) throw new Error('DEV_STOPPING');
     // The dev-session lease is held and the Astro port is free: no reader can
     // still be using this previous session's private generations.
-    renderContextCleanup = safePath(root, '.alfred/dev/render').then((path) =>
-      rm(path, { recursive: true, force: true }),
-    );
+    renderContextCleanup = safePath(
+      root,
+      privateResource(root, 'dev/render'),
+    ).then((path) => rm(path, { recursive: true, force: true }));
     await renderContextCleanup;
   }
   await command('bootstrap-packages');

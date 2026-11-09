@@ -125,7 +125,12 @@ describe('current artifact API reports the actual installed dist source', () => 
         render: async (context) => {
           await smallBuild.render?.(context);
           await writeFile(
-            join(root, '.alfred/builds', context.jobId, 'output/index.html'),
+            join(
+              root,
+              '.foliohaven/builds',
+              context.jobId,
+              'output/index.html',
+            ),
             `<p>${context.snapshotRevision}</p>`,
           );
         },
@@ -207,7 +212,12 @@ describe('current artifact API reports the actual installed dist source', () => 
     expect(accepted.recoveryState).toBe('ready');
     expect(accepted.current).not.toBeNull();
     expect(accepted.current?.build).toBeNull();
-    const privatePath = join(root, '.alfred/artifacts', a.id, 'journal.json');
+    const privatePath = join(
+      root,
+      '.foliohaven/artifacts',
+      a.id,
+      'journal.json',
+    );
     const value = JSON.parse(await readFile(privatePath, 'utf8')) as Record<
       string,
       unknown

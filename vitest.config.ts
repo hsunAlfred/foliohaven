@@ -1,13 +1,24 @@
+import { privateResource } from './scripts/workspace-paths.mjs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 import { ensurePrivateDirectory } from './scripts/private-directory.mjs';
+import {
+  verificationResources,
+  verificationConfiguredUnitWorkers,
+} from './scripts/verification-plan.mjs';
 
 const repositoryRoot = fileURLToPath(new URL('.', import.meta.url));
-ensurePrivateDirectory(repositoryRoot, '.alfred/cache/vitest');
+const cacheDir = privateResource(repositoryRoot, 'cache/vitest');
+ensurePrivateDirectory(repositoryRoot, cacheDir);
+const unitWorkers = verificationConfiguredUnitWorkers(
+  process.env.FOLIOHAVEN_UNIT_WORKERS,
+  await verificationResources(),
+  process.argv,
+);
 
 export default defineConfig({
   root: repositoryRoot,
-  cacheDir: '.alfred/cache/vitest',
+  cacheDir,
   test: {
     environment: 'node',
     globals: false,
@@ -27,6 +38,10 @@ export default defineConfig({
         test: {
           name: 'unit',
           include: ['tests/unit/**/*.test.{ts,tsx,mts}'],
+          pool: 'forks',
+          isolate: true,
+          maxWorkers: unitWorkers,
+          fileParallelism: true,
         },
       },
       {

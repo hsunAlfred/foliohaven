@@ -31,7 +31,7 @@ async function fixture(large = false) {
   cleanups.push(() => rm(root, { recursive: true, force: true }));
   const artifacts = new ArtifactStore({ repositoryRoot: root });
   const id = randomUUID();
-  const output = `.alfred/builds/${id}/output`;
+  const output = `.foliohaven/builds/${id}/output`;
   await mkdir(join(root, output, 'notes'), { recursive: true, mode: 0o700 });
   await mkdir(join(root, output, 'assets'), { mode: 0o700 });
   for (const [path, value] of Object.entries({
@@ -105,7 +105,7 @@ it('serves committed HTML, trailing slash, 404, correct MIME, HEAD, ETag and act
   expect(full.status).toBe(200);
   expect(Buffer.from(await full.arrayBuffer())).toEqual(f.video);
   expect((await fetch(f.url + '/', { method: 'POST' })).status).toBe(405);
-  expect((await fetch(f.url + '/.alfred/jobs/')).status).toBe(404);
+  expect((await fetch(f.url + '/.foliohaven/jobs/')).status).toBe(404);
   expect((await fetch(f.url + '/%2Fserver/')).status).toBe(400);
   for (const encoded of ['%00', '%0a', '%7f'])
     expect((await fetch(f.url + '/' + encoded)).status).toBe(400);
@@ -176,7 +176,7 @@ it.each(['addition', 'deletion', 'rename', 'symlink'] as const)(
       await rename(join(dist, 'notes'), join(dist, 'renamed-notes'));
     else
       await symlink(
-        join(f.root, '.alfred/artifacts/state.json'),
+        join(f.root, '.foliohaven/artifacts/state.json'),
         join(dist, 'assets/private-link'),
       );
     await expectBlockedPreview(f);
@@ -190,7 +190,7 @@ it('refreshes content and ETags after another store promotes and restores output
   if (!firstEtag) throw new Error('Static ETag missing');
   const artifacts = new ArtifactStore({ repositoryRoot: f.root });
   const id = randomUUID();
-  const output = join(f.root, '.alfred/builds', id, 'output');
+  const output = join(f.root, '.foliohaven/builds', id, 'output');
   await mkdir(output, { recursive: true, mode: 0o700 });
   await writeFile(
     join(output, 'index.html'),
@@ -229,7 +229,7 @@ it.each(['state', 'journal'] as const)(
   async (control) => {
     const f = await fixture();
     const path = control === 'state' ? 'state.json' : `${f.id}/journal.json`;
-    await writeFile(join(f.root, '.alfred/artifacts', path), '{');
+    await writeFile(join(f.root, '.foliohaven/artifacts', path), '{');
     await expectBlockedPreview(f);
   },
 );
@@ -238,13 +238,13 @@ it('rejects cached output when a new journal requires recovery', async () => {
   const journal = parseArtifactJournal(
     JSON.parse(
       await readFile(
-        join(f.root, '.alfred/artifacts', f.id, 'journal.json'),
+        join(f.root, '.foliohaven/artifacts', f.id, 'journal.json'),
         'utf8',
       ),
     ),
   );
   const id = randomUUID();
-  const directory = join(f.root, '.alfred/artifacts', id);
+  const directory = join(f.root, '.foliohaven/artifacts', id);
   await mkdir(directory, { mode: 0o700 });
   await writeFile(
     join(directory, 'journal.json'),
@@ -298,7 +298,7 @@ it('holds the artifact lease through a paused real HTTP stream, then allows comp
     if (probe) await probe.release();
     expect(probe).toBeNull();
     const id = randomUUID();
-    const output = `.alfred/builds/${id}/output`;
+    const output = `.foliohaven/builds/${id}/output`;
     await mkdir(join(f.root, output), { recursive: true, mode: 0o700 });
     await writeFile(
       join(f.root, output, 'index.html'),

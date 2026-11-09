@@ -1,3 +1,4 @@
+import { privateResource } from './workspace-paths.mjs';
 import {
   existsSync,
   mkdirSync,
@@ -115,7 +116,7 @@ try {
 
   const checksDirectory = ensurePrivateDirectory(
     repository,
-    '.alfred/environment-checks',
+    privateResource(repository, 'environment-checks'),
   );
   fixture = mkdtempSync(join(checksDirectory, 'compiler-'));
   write('package.json', { private: true, type: 'module' });

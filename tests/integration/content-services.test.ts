@@ -75,7 +75,7 @@ async function scanInputs(): Promise<string> {
     for (const item of (await readdir(path, { withFileTypes: true })).sort(
       (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0),
     )) {
-      if (item.name === '.alfred') continue;
+      if (item.name === '.foliohaven') continue;
       const full = join(path, item.name);
       if (item.isDirectory()) await walk(full);
       else {

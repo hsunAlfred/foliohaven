@@ -45,7 +45,7 @@ async function fixture(): Promise<string> {
   return root;
 }
 async function snapshot(root: string): Promise<string> {
-  const job = join(root, '.alfred/builds', randomUUID());
+  const job = join(root, '.foliohaven/builds', randomUUID());
   await mkdir(job, { recursive: true, mode: 0o700 });
   return join(job, 'snapshot');
 }
@@ -115,8 +115,8 @@ describe('complete build input scanner and snapshot', () => {
     );
     await mkdir(join(root, 'site/dist'), { recursive: true });
     await writeFile(join(root, 'site/dist/generated.html'), 'output');
-    await mkdir(join(root, '.alfred'), { mode: 0o700 });
-    await writeFile(join(root, '.alfred/private.json'), 'private fixture');
+    await mkdir(join(root, '.foliohaven'), { mode: 0o700 });
+    await writeFile(join(root, '.foliohaven/private.json'), 'private fixture');
     expect((await scanBuildInputs(root)).revision).toBe(before.revision);
   });
   it('rejects source symlinks and nested private environment files', async () => {

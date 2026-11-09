@@ -1,4 +1,4 @@
-import { resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
 import {
   DiagnosticSchema,
   SafeErrorSchema,
@@ -6,7 +6,12 @@ import {
   type ApiIssue,
   type Diagnostic,
 } from '@foliohaven/core';
-import { atomicJson, safeMkdir } from '../../files/io.js';
+import {
+  isBuildSnapshotResource,
+  privateResource,
+  atomicJson,
+  safeMkdir,
+} from '../../files/io.js';
 import { RenderError } from './context.js';
 
 function message(code: string): string {
@@ -94,14 +99,15 @@ export async function writeBuildFailureReport(
 ): Promise<SafeError> {
   const root = resolve(snapshotRoot);
   if (
-    !/\/\.alfred\/builds\/[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\/snapshot$/u.test(
-      root,
+    !isBuildSnapshotResource(
+      resolve(root, '../../../..'),
+      relative(resolve(root, '../../../..'), root),
     )
   )
     throw new Error('INVALID_FAILURE_REPORT_LOCATION');
   const safeError = safeRenderFailure(error);
-  await safeMkdir(root, '.alfred');
-  await atomicJson(root, '.alfred/build-failure.json', {
+  await safeMkdir(root, privateResource(root));
+  await atomicJson(root, privateResource(root, 'build-failure.json'), {
     schemaVersion: 1,
     error: safeError,
   });

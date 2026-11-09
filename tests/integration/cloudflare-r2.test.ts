@@ -375,6 +375,114 @@ async function bulkSource(
 }
 
 describe('Cloudflare R2 S3 protocol and recovery', () => {
+  it.each(['foliohaven', 'both'] as const)(
+    'retains identical managed objects without metadata-only renaming: %s',
+    async (format) => {
+      const f = await fixture();
+      const previous = randomUUID();
+      const headers: Record<string, string> = {
+        'content-type': 'text/plain',
+        'cache-control': CACHE,
+      };
+      for (const prefix of format === 'both'
+        ? ['foliohaven', 'alfred']
+        : ['foliohaven']) {
+        headers[`x-amz-meta-${prefix}-sha256`] = hash('same');
+        headers[`x-amz-meta-${prefix}-byte-size`] = '4';
+        headers[`x-amz-meta-${prefix}-deployment-id`] = previous;
+      }
+      await f.seed('media/a.txt', 'same', headers);
+      await f.source('media/a.txt', 'same');
+      expect((await f.adapter.prepare(f.context))[0]?.action).toBe('skip');
+      await f.adapter.upload(f.context);
+      expect(f.events.some((event) => /^(?:PUT|POST) /u.test(event))).toBe(
+        false,
+      );
+      expect(f.objects.get('media/a.txt')?.headers).toEqual(headers);
+    },
+  );
+
+  it.each([
+    'missing-new-field',
+    'invalid-new-hash',
+    'conflicting-hash',
+    'conflicting-deployment',
+    'mixed-fields',
+    'incomplete-legacy-only',
+  ])(
+    'rejects incomplete or conflicting metadata before remote writes: %s',
+    async (problem) => {
+      const f = await fixture();
+      const previous = randomUUID();
+      const headers: Record<string, string> = {
+        'content-type': 'text/plain',
+        'cache-control': CACHE,
+      };
+      for (const prefix of ['foliohaven', 'alfred']) {
+        headers[`x-amz-meta-${prefix}-sha256`] = hash('same');
+        headers[`x-amz-meta-${prefix}-byte-size`] = '4';
+        headers[`x-amz-meta-${prefix}-deployment-id`] = previous;
+      }
+      if (problem === 'missing-new-field')
+        delete headers['x-amz-meta-foliohaven-byte-size'];
+      if (problem === 'invalid-new-hash')
+        headers['x-amz-meta-foliohaven-sha256'] = 'invalid';
+      if (problem === 'conflicting-hash')
+        headers['x-amz-meta-foliohaven-sha256'] = hash('diff');
+      if (problem === 'conflicting-deployment')
+        headers['x-amz-meta-foliohaven-deployment-id'] = randomUUID();
+      if (problem === 'mixed-fields') {
+        delete headers['x-amz-meta-foliohaven-byte-size'];
+        delete headers['x-amz-meta-alfred-sha256'];
+      }
+      if (problem === 'incomplete-legacy-only') {
+        delete headers['x-amz-meta-foliohaven-sha256'];
+        delete headers['x-amz-meta-foliohaven-byte-size'];
+        delete headers['x-amz-meta-foliohaven-deployment-id'];
+        delete headers['x-amz-meta-alfred-byte-size'];
+      }
+      await f.seed('media/a.txt', 'same', headers);
+      await f.source('media/a.txt', 'new');
+      await expect(f.adapter.prepare(f.context)).rejects.toMatchObject({
+        code: problem.startsWith('conflicting')
+          ? 'R2_METADATA_CONFLICT'
+          : 'R2_METADATA_INVALID',
+      });
+      expect(f.events.some((event) => /^(?:PUT|POST) /u.test(event))).toBe(
+        false,
+      );
+      expect(f.objects.get('media/a.txt')?.headers).toEqual(headers);
+    },
+  );
+
+  it('restores legacy managed metadata verbatim after overwriting with Foliohaven metadata', async () => {
+    const f = await fixture();
+    const headers = {
+      'content-type': 'text/plain',
+      'cache-control': CACHE,
+      'x-amz-meta-alfred-sha256': hash('old'),
+      'x-amz-meta-alfred-byte-size': '3',
+      'x-amz-meta-alfred-deployment-id': randomUUID(),
+    };
+    await f.seed('media/a.txt', 'old', headers);
+    await f.source('media/a.txt', 'new');
+    await f.adapter.prepare(f.context);
+    const before = structuredClone(f.context.journal.r2?.records[0]?.before);
+    await f.adapter.upload(f.context);
+    expect(
+      f.objects.get('media/a.txt')?.headers['x-amz-meta-foliohaven-sha256'],
+    ).toBe(hash('new'));
+    expect(f.objects.get('media/a.txt')?.headers).not.toHaveProperty(
+      'x-amz-meta-alfred-sha256',
+    );
+    await f.adapter.restore(f.context);
+    expect(f.objects.get('media/a.txt')?.headers).toEqual(headers);
+    expect(f.context.journal.r2?.records[0]?.before).toEqual(before);
+    expect(
+      await readFile(required(f.objects.get('media/a.txt')).path, 'utf8'),
+    ).toBe('old');
+  });
+
   it('backs up every overwrite before any write, uploads with metadata, then restores original bytes and metadata', async () => {
     const f = await fixture();
     await f.seed('media/a.txt', 'old A', {
@@ -398,7 +506,7 @@ describe('Cloudflare R2 S3 protocol and recovery', () => {
     expect((await f.adapter.status(f.context)).complete).toBe(true);
     expect(f.objects.get('media/a.txt')?.headers['cache-control']).toBe(CACHE);
     expect(
-      f.objects.get('media/a.txt')?.headers['x-amz-meta-alfred-sha256'],
+      f.objects.get('media/a.txt')?.headers['x-amz-meta-foliohaven-sha256'],
     ).toBe(hash('new A'));
     expect(f.saved.some((saved) => saved.includes('"status":"intent"'))).toBe(
       true,

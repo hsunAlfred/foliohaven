@@ -35,7 +35,7 @@ const restoreDeployment = '66666666-6666-4666-8666-666666666666';
 const target = { accountId: 'a'.repeat(32), workerName: 'fixture-blog' };
 const token = 'fixture-worker-token';
 
-async function fixture() {
+async function fixture(privateName: '.foliohaven' | '.alfred' = '.foliohaven') {
   const repositoryRoot = await mkdtemp(join(tmpdir(), 'alfred-worker-'));
   directories.push(repositoryRoot);
   await mkdir(join(repositoryRoot, 'cloudflare'));
@@ -43,8 +43,8 @@ async function fixture() {
     new URL('../../cloudflare/wrangler.template.json', import.meta.url),
     join(repositoryRoot, 'cloudflare/wrangler.template.json'),
   );
-  const root = join(repositoryRoot, '.alfred/deployments', id);
-  await mkdir(join(root, 'worker/article'), { recursive: true });
+  const root = join(repositoryRoot, privateName, 'deployments', id);
+  await mkdir(join(root, 'worker/article'), { recursive: true, mode: 0o700 });
   const files = {
     'index.html': '<!doctype html><title>Home</title><h1>Fixture home</h1>',
     'article/index.html':
@@ -123,7 +123,10 @@ async function fixture() {
       if (remote.putError) return response(null, remote.putError);
       remote.versionId = oldVersion;
       remote.deploymentId = restoreDeployment;
-      remote.message = `alfred-wiki restore ${id}`;
+      remote.message =
+        (body as { annotations: Record<string, string> }).annotations[
+          'workers/message'
+        ] ?? '';
       if (remote.lostRestoreResponse)
         throw new Error('fixture lost successful response');
       return response({ id: restoreDeployment });
@@ -170,7 +173,8 @@ async function fixture() {
     remote.exists = true;
     remote.versionId = newVersion;
     remote.deploymentId = newDeployment;
-    remote.message = `alfred-wiki deploy ${id}`;
+    remote.message = options.args[options.args.indexOf('--message') + 1] ?? '';
+    remote.versionMessages[newVersion] = remote.message;
     remote.handlers = ['fetch'];
     return {};
   };
@@ -231,6 +235,53 @@ afterEach(async () => {
 });
 
 describe('Cloudflare Worker deployment boundary', () => {
+  it.each(['.foliohaven', '.alfred'] as const)(
+    'keeps %s deployment evidence readable and writes Foliohaven operation messages',
+    async (privateName) => {
+      const f = await fixture(privateName);
+      f.remote.exists = true;
+      f.remote.handlers = ['fetch'];
+      f.remote.message = `alfred-wiki deploy ${oldVersion}`;
+      await f.worker.preflight(f.context);
+      await f.worker.stage(f.context);
+      await f.worker.deploy(f.context);
+      const run = f.runs[0];
+      expect(run?.args[run.args.indexOf('--message') + 1]).toBe(
+        `foliohaven deploy ${id}`,
+      );
+      expect(f.context.journal.worker?.before?.message).toBe(
+        `alfred-wiki deploy ${oldVersion}`,
+      );
+      f.remote.message = `alfred-wiki deploy ${id}`;
+      f.remote.versionMessages[newVersion] = `alfred-wiki deploy ${id}`;
+      await expect(f.worker.status(f.context)).resolves.toMatchObject({
+        status: 'uploaded',
+      });
+      await f.worker.restore(f.context);
+      const restore = f.requests.find((request) => request.method === 'POST');
+      expect(restore?.body).toMatchObject({
+        annotations: { 'workers/message': `foliohaven restore ${id}` },
+      });
+      expect(await readdir(f.repositoryRoot)).not.toContain(
+        privateName === '.alfred' ? '.foliohaven' : '.alfred',
+      );
+    },
+  );
+
+  it('recognizes a Foliohaven version marker while still requiring the matching version tag', async () => {
+    const f = await fixture();
+    f.remote.exists = true;
+    f.remote.handlers = ['fetch'];
+    f.remote.versionMessages[oldVersion] = `foliohaven deploy ${oldVersion}`;
+    await expect(f.worker.preflight(f.context)).resolves.toMatchObject({
+      versionId: oldVersion,
+    });
+    f.remote.versionTags[oldVersion] = id;
+    await expect(f.worker.preflight()).rejects.toMatchObject({
+      code: 'WORKER_SETTINGS_CONFLICT',
+    });
+  });
+
   it('stages a fixed assets-only config and dry-runs without credentials or API calls', async () => {
     const f = await fixture();
     vi.stubEnv('CLOUDFLARE_API_TOKEN', 'must-not-inherit');

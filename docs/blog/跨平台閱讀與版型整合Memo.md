@@ -2,6 +2,8 @@
 
 這份 Memo 說明中性版型已接入的閱讀控制，以及自訂版型時需要保留的 DOM 契約。相關瀏覽器測試不能代替真正 iPhone／iPad 的實機確認。
 
+架構、媒體、布局、可及性、SEO 與效能目標依人與 AI Agent 共用的[網站開發與品質標準](網站開發與品質標準.md)；本文只補閱讀互動契約。修改時核對實際 DOM，不以中性版型檔名覆蓋自訂接線。
+
 ## 閱讀位置與 iOS 返回
 
 實作位置為 `site/src/scripts/reading-history-head.ts`、`reading-history.ts`，由 `BaseLayout.astro` 接入。head 初始化必須在內容載入前同步執行，避免 Safari 原生還原和稍後的程式互相覆蓋。
@@ -20,7 +22,7 @@
 
 程式碼區塊使用水平捲動，垂直捲動到邊界時仍可繼續捲動外層頁面。請保留水平與垂直不同的 overscroll 設定，不要對兩個方向一起使用 `contain`。
 
-文章控制由 `site/src/scripts/article-enhancements.ts` 接入 `.article-body`。修改 code toolbar 或表格 wrapper 時，保留預先規劃的幾何空間，避免初次載入突然推動文章。
+文章控制由 `site/src/scripts/article-enhancements.ts` 選取 `[data-article-body]` 接入，`.article-body` 負責共用正文樣式；中性 `ArticlePage` 已輸出兩者。沿用既有增強程式的自訂版型需保留對應標記，不能只保留 class 而省略 data 標記。修改 code toolbar 或表格 wrapper 時，保留預先規劃的幾何空間，避免初次載入突然推動文章。
 
 ## 目錄與定位
 
@@ -31,6 +33,8 @@
 更換目錄 DOM 時，需同步維護 controller 的選取標記，以及對應的 SSR、無 JavaScript、首屏幾何、鍵盤、touch、被動追蹤與清單捲動測試。
 
 ## 自訂後的檢查
+
+按[網站開發與品質標準](網站開發與品質標準.md#依修改範圍選擇檢查)選擇代表頁與量測範圍；以下命令檢查閱讀控制，結果與手動效能量測分開記錄。
 
 先執行 `pnpm build`，再於獨立測試環境執行：
 

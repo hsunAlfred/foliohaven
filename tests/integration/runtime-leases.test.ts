@@ -61,12 +61,13 @@ describe('kernel descriptor leases', () => {
     const path = await root();
     const first = await acquireHeld(path);
     expect(first).not.toBeNull();
-    const inode = (await lstat(join(path, '.alfred/locks/shared.lock'))).ino;
+    const inode = (await lstat(join(path, '.foliohaven/locks/shared.lock')))
+      .ino;
     expect(await acquire(path, { nonBlocking: true })).toBeNull();
     await first.release();
     await first.release();
     expect(await acquire(path, { nonBlocking: true })).not.toBeNull();
-    expect((await lstat(join(path, '.alfred/locks/shared.lock'))).ino).toBe(
+    expect((await lstat(join(path, '.foliohaven/locks/shared.lock'))).ino).toBe(
       inode,
     );
   });
@@ -147,11 +148,11 @@ describe('kernel descriptor leases', () => {
     const path = await root();
     const first = await acquireHeld(path);
     await first.release();
-    await chmod(join(path, '.alfred/locks/shared.lock'), 0o644);
+    await chmod(join(path, '.foliohaven/locks/shared.lock'), 0o644);
     await expect(acquire(path)).rejects.toMatchObject({
       code: 'LOCK_PERMISSIONS',
     });
-    await symlink('shared.lock', join(path, '.alfred/locks/linked.lock'));
+    await symlink('shared.lock', join(path, '.foliohaven/locks/linked.lock'));
     await expect(acquire(path, { name: 'linked' })).rejects.toMatchObject({
       code: 'RESOURCE_SYMLINK',
     });

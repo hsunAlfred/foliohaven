@@ -45,6 +45,8 @@ if (command === 'curl') {
   if (mode === 'probe-stop-failed') process.exit(28);
 } else if (command === 'docker') {
   if (args[0] === 'build') {
+    const buildArgs = args.flatMap((value, index) => value === '--build-arg' ? [args[index + 1]] : []);
+    if (!buildArgs.includes('LOCAL_UID=' + process.getuid()) || !buildArgs.includes('LOCAL_GID=' + process.getgid())) process.exit(98);
     if (existsSync('author.txt') || existsSync('.devcontainer/private-only.txt') || existsSync('docs/development/author-private-notes.md')) process.exit(90);
     const config = JSON.parse(readFileSync('.devcontainer/devcontainer.json', 'utf8'));
     if (config.postStartCommand || config.customizations.vscode.extensions.includes('openai.chatgpt')) process.exit(91);
@@ -66,7 +68,7 @@ if (command === 'curl') {
     const files = args.flatMap((value, index) => value === '-f' ? [args[index + 1]] : []);
     if (projectDirectory !== process.cwd() || files[0] !== join(process.cwd(), 'docker-compose.yml') || files.some(file => ![join(process.cwd(), 'docker-compose.yml'), join(process.cwd(), '.devcontainer/docker-compose.yml')].includes(file))) process.exit(93);
     const envFile = args[args.indexOf('--env-file') + 1];
-    if (envFile !== join(process.cwd(), '.alfred/compose.env') || readFileSync(envFile, 'utf8') !== '') process.exit(97);
+    if (envFile !== join(process.cwd(), '.foliohaven/compose.env') || readFileSync(envFile, 'utf8') !== '') process.exit(97);
     for (const name of ['COMPOSE_FILE', 'COMPOSE_PROFILES', 'COMPOSE_ENV_FILES', 'COMPOSE_PROJECT_NAME', 'COMPOSE_PATH_SEPARATOR', 'COMPOSE_CONVERT_WINDOWS_PATHS', 'COMPOSE_REMOVE_ORPHANS', 'COMPOSE_COMPATIBILITY']) {
       if (process.env[name] !== undefined) process.exit(94);
     }
@@ -76,13 +78,13 @@ if (command === 'curl') {
     if (args.includes('logs')) console.log('MOCK_CONTAINER_LOG');
     if (args.includes('stop') && mode === 'probe-stop-failed') process.exit(71);
     if (args.includes('exec') && args.includes('tests/release/docker-check.mjs')) {
-      const report = join(process.cwd(), '.alfred/reports/release-docker-check');
+      const report = join(process.cwd(), '.foliohaven/reports/release-docker-check');
       mkdirSync(report, { recursive: true });
       writeFileSync(join(report, args.at(-1) + '.json'), JSON.stringify({ isolated: true }));
       console.log('MOCK_AUTHOR_CHECK_' + args.at(-1));
     }
     if (args.includes('exec') && args.includes('tests/release/cloudflare-docker-check.mjs')) {
-      const report = join(process.cwd(), '.alfred/reports/release-docker-check');
+      const report = join(process.cwd(), '.foliohaven/reports/release-docker-check');
       mkdirSync(report, { recursive: true });
       const failed = mode === 'cloudflare-dry-run-failed';
       writeFileSync(join(report, 'cloudflare-dry-run.json'), JSON.stringify({ isolated: true, scope: 'fake-docker-harness', status: failed ? 'failed' : 'passed', remoteWrites: false }));
@@ -116,6 +118,7 @@ async function releaseSourceFixture(source: string) {
     'package.json',
     'scripts/package-release.mjs',
     'scripts/release-source.mjs',
+    'scripts/workspace-paths.mjs',
     'release/manifest.json',
   ]) {
     await mkdir(dirname(join(source, path)), { recursive: true });
@@ -165,6 +168,11 @@ async function run(mode = 'success', port?: number) {
     await cp(
       join(source, 'release/templates/devcontainer'),
       join(source, '.devcontainer'),
+      { recursive: true },
+    );
+    await cp(
+      join(source, 'release/templates/github'),
+      join(source, '.github'),
       { recursive: true },
     );
     await writeFile(
@@ -250,7 +258,7 @@ async function run(mode = 'success', port?: number) {
     .split('\n')
     .filter(Boolean)
     .map((line) => JSON.parse(line) as CommandRecord);
-  const reports = join(source, '.alfred/reports/release-docker-host');
+  const reports = join(source, '.foliohaven/reports/release-docker-host');
   const report = join(reports, (await readdir(reports))[0] ?? 'missing-report');
   const workspace = commands.find(
     (item) => item.command === 'docker' && item.args[0] === 'build',
@@ -396,9 +404,9 @@ describe('release host script progress and failure preservation', () => {
         join(tmpdir(), 'alfred-cloudflare-helper-guard-'),
       );
       roots.push(directory);
-      await mkdir(join(directory, '.alfred'), { mode: 0o700 });
+      await mkdir(join(directory, '.foliohaven'), { mode: 0o700 });
       await writeFile(
-        join(directory, '.alfred/release-check-workspace.json'),
+        join(directory, '.foliohaven/release-check-workspace.json'),
         JSON.stringify({
           schemaVersion: 1,
           purpose:
@@ -437,7 +445,7 @@ describe('release host script progress and failure preservation', () => {
         expect(await readFile(join(directory, forbidden), 'utf8')).toBe(
           'author fixture must survive\n',
         );
-      expect(await readdir(join(directory, '.alfred'))).toEqual([
+      expect(await readdir(join(directory, '.foliohaven'))).toEqual([
         'release-check-workspace.json',
       ]);
     },
@@ -459,7 +467,7 @@ describe('release host script progress and failure preservation', () => {
         join(call.cwd, 'docker-compose.yml'),
       );
       expect(call.args[call.args.indexOf('--env-file') + 1]).toBe(
-        join(call.cwd, '.alfred/compose.env'),
+        join(call.cwd, '.foliohaven/compose.env'),
       );
       expect(call.args).not.toContain('development');
       expect(call.args).not.toContain('author-existing-project');

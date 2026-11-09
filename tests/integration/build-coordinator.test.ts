@@ -77,13 +77,13 @@ async function fixture() {
   const render: NonNullable<
     NonNullable<BuildCoordinatorOptions['execution']>['render']
   > = async (options) => {
-    await safeMkdir(root, `.alfred/builds/${id}/output`);
+    await safeMkdir(root, `.foliohaven/builds/${id}/output`);
     await writeFile(
-      join(root, `.alfred/builds/${id}/output/index.html`),
+      join(root, `.foliohaven/builds/${id}/output/index.html`),
       'NEW_SUCCESS',
     );
-    await safeMkdir(options.snapshotRoot, '.alfred');
-    await atomicJson(options.snapshotRoot, '.alfred/build-result.json', {
+    await safeMkdir(options.snapshotRoot, '.foliohaven');
+    await atomicJson(options.snapshotRoot, '.foliohaven/build-result.json', {
       schemaVersion: 1,
       mediaPending: false,
       pendingLinkChecks: 0,
@@ -125,7 +125,7 @@ async function oldDist(root: string) {
 }
 async function noSnapshot(root: string, id: string) {
   await expect(
-    lstat(join(root, `.alfred/builds/${id}/snapshot`)),
+    lstat(join(root, `.foliohaven/builds/${id}/snapshot`)),
   ).rejects.toMatchObject({ code: 'ENOENT' });
 }
 
@@ -172,8 +172,8 @@ describe('complete build coordinator and final source CAS', () => {
       await writeFile(
         join(f.root, 'scripts/build-worker.mjs'),
         `import { mkdir, writeFile } from 'node:fs/promises';
-await mkdir('.alfred', {recursive:true, mode:0o700});
-${kind === 'missing' ? '' : `await writeFile('.alfred/build-failure.json', ${JSON.stringify(JSON.stringify(value))});`}
+await mkdir('.foliohaven', {recursive:true, mode:0o700});
+${kind === 'missing' ? '' : `await writeFile('.foliohaven/build-failure.json', ${JSON.stringify(JSON.stringify(value))});`}
 process.stderr.write('PRIVATE_STDERR_MUST_NOT_ESCAPE');
 process.exitCode = 1;`,
       );
@@ -304,7 +304,10 @@ process.exitCode = 1;`,
       const f = await fixture();
       const render = async (options: Parameters<typeof f.render>[0]) => {
         await f.render(options);
-        const path = join(options.snapshotRoot, '.alfred/build-result.json');
+        const path = join(
+          options.snapshotRoot,
+          '.foliohaven/build-result.json',
+        );
         const value: {
           mediaPending: boolean;
           pendingLinkChecks: number;
@@ -392,8 +395,11 @@ process.exitCode = 1;`,
   });
   it('preserves unknown preexisting job data and rejects reuse', async () => {
     const f = await fixture();
-    await safeMkdir(f.root, `.alfred/builds/${f.id}/snapshot`);
-    const path = join(f.root, `.alfred/builds/${f.id}/snapshot/unknown.txt`);
+    await safeMkdir(f.root, `.foliohaven/builds/${f.id}/snapshot`);
+    const path = join(
+      f.root,
+      `.foliohaven/builds/${f.id}/snapshot/unknown.txt`,
+    );
     await writeFile(path, 'UNKNOWN_PRIVATE_VERSION');
     await expect(f.coordinator().run(f.context, {})).rejects.toMatchObject({
       code: 'BUILD_JOB_EXISTS',

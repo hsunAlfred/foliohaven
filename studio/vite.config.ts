@@ -23,8 +23,8 @@ function baseConfiguration(mode = 'development'): UserConfig {
     root: studioRoot,
     plugins: [react()],
     define: {
-      __ALFRED_SOURCE_PREVIEW_PORT__: previewPort('SITE_PORT', 4321),
-      __ALFRED_BUILT_PREVIEW_PORT__: previewPort('PREVIEW_PORT', 4322),
+      __FOLIOHAVEN_SOURCE_PREVIEW_PORT__: previewPort('SITE_PORT', 4321),
+      __FOLIOHAVEN_BUILT_PREVIEW_PORT__: previewPort('PREVIEW_PORT', 4322),
     },
     cacheDir: resolve(studioRoot, 'node_modules/.vite'),
     build: {
@@ -57,6 +57,7 @@ function baseConfiguration(mode = 'development'): UserConfig {
             'content',
             'media/source',
             'server',
+            '.foliohaven',
             '.alfred',
             'node_modules/@foliohaven/server',
             'packages/core/dist/node',
@@ -122,8 +123,15 @@ export function createStudioViteConfig(options: {
                   /* malformed Origin仍由Local Service拒絕mutation。 */
                 }
               }
-              outgoing.setHeader('x-alfred-process-token', options.proxyToken);
-              outgoing.setHeader('x-alfred-studio-origin', origin);
+              for (const prefix of ['x-foliohaven', 'x-alfred']) {
+                outgoing.removeHeader(`${prefix}-process-token`);
+                outgoing.removeHeader(`${prefix}-studio-origin`);
+              }
+              outgoing.setHeader(
+                'x-foliohaven-process-token',
+                options.proxyToken,
+              );
+              outgoing.setHeader('x-foliohaven-studio-origin', origin);
               outgoing.removeHeader('authorization');
               outgoing.removeHeader('cookie');
             });

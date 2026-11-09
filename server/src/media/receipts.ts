@@ -8,6 +8,7 @@ import {
 } from '@foliohaven/core';
 import type { MediaJobRequest, MediaResult } from '@foliohaven/core';
 import {
+  privateResource,
   atomicJson,
   isMissing,
   readOptional,
@@ -171,15 +172,15 @@ function parseReceipt(value: unknown, jobId: string): MediaReceipt {
     binding,
   };
 }
-function receiptKey(jobId: string) {
+function receiptKey(root: string, jobId: string) {
   if (!UuidSchema.safeParse(jobId).success)
     throw new MediaError('MEDIA_JOB_ID_INVALID', '媒體工作識別不合法。', 400);
-  return `.alfred/media-job-receipts/${jobId}.json`;
+  return privateResource(root, `media-job-receipts/${jobId}.json`);
 }
 export class MediaReceipts {
   constructor(readonly root: string) {}
   async read(jobId: string): Promise<MediaReceipt | null> {
-    const key = receiptKey(jobId);
+    const key = receiptKey(this.root, jobId);
     const bytes = await readOptional(
       await safePath(this.root, key),
       128 * 1024,
@@ -246,15 +247,21 @@ export class MediaReceipts {
         );
       return previous;
     }
-    await safeMkdir(this.root, '.alfred/media-job-receipts');
-    await atomicJson(this.root, receiptKey(jobId), value);
+    await safeMkdir(
+      this.root,
+      privateResource(this.root, 'media-job-receipts'),
+    );
+    await atomicJson(this.root, receiptKey(this.root, jobId), value);
     return value;
   }
   async binding(state: SourceState): Promise<Binding | null> {
     let entries;
     try {
       entries = await readdir(
-        await safePath(this.root, '.alfred/media-job-receipts'),
+        await safePath(
+          this.root,
+          privateResource(this.root, 'media-job-receipts'),
+        ),
         { withFileTypes: true },
       );
     } catch (error) {

@@ -1,3 +1,4 @@
+import { privateResource } from './workspace-paths.mjs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import {
@@ -12,7 +13,7 @@ const stop = () => controller.abort();
 process.once('SIGINT', stop);
 process.once('SIGTERM', stop);
 try {
-  const context = resolve(root, '.alfred/typecheck/render');
+  const context = resolve(root, privateResource(root, 'typecheck/render'));
   await prepareRenderContext({
     repositoryRoot: root,
     contextDirectory: context,
@@ -23,8 +24,11 @@ try {
     args: ['--filter', '@foliohaven/site', 'typecheck'],
     cwd: root,
     env: buildProcessEnvironment({
-      ALFRED_RENDER_CONTEXT: context,
-      ALFRED_RENDER_OUTPUT: resolve(root, '.alfred/typecheck/site-output'),
+      FOLIOHAVEN_RENDER_CONTEXT: context,
+      FOLIOHAVEN_RENDER_OUTPUT: resolve(
+        root,
+        privateResource(root, 'typecheck/site-output'),
+      ),
     }),
     timeoutMs: 15 * 60_000,
     maxOutputBytes: 32 * 1024 * 1024,

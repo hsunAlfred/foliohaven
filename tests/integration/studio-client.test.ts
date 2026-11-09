@@ -172,6 +172,9 @@ describe('STUDIO-API-01: browser API contract and source-safe formatting', () =>
     expect(new Headers(seen[0]?.headers).has('x-alfred-process-token')).toBe(
       false,
     );
+    expect(
+      new Headers(seen[0]?.headers).has('x-foliohaven-process-token'),
+    ).toBe(false);
   });
   it('keeps preview editor ID out of the ArticleWrite body and sends it only as a header', async () => {
     let seen: RequestInit | undefined;
@@ -185,9 +188,10 @@ describe('STUDIO-API-01: browser API contract and source-safe formatting', () =>
       { contentHtml: '原文' },
       { editorId: requestId },
     );
-    expect(new Headers(seen?.headers).get('x-alfred-editor-id')).toBe(
+    expect(new Headers(seen?.headers).get('x-foliohaven-editor-id')).toBe(
       requestId,
     );
+    expect(new Headers(seen?.headers).has('x-alfred-editor-id')).toBe(false);
     expect(seen?.body).toBe('{"contentHtml":"原文"}');
   });
   it('rejects cross-origin, traversal and non-API paths before any request', async () => {

@@ -39,8 +39,8 @@ export async function withSiteDev(
     ],
     cwd: snapshot,
     env: buildProcessEnvironment({
-      ALFRED_RENDER_CONTEXT: join(snapshot, '.alfred/render'),
-      ALFRED_RENDER_OUTPUT: join(snapshot, '.alfred/dev-output'),
+      FOLIOHAVEN_RENDER_CONTEXT: join(snapshot, '.foliohaven/render'),
+      FOLIOHAVEN_RENDER_OUTPUT: join(snapshot, '.foliohaven/dev-output'),
     }),
     signal: controller.signal,
     timeoutMs: 60_000,

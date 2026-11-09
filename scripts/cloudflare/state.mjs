@@ -1,4 +1,6 @@
+import { privateResource } from '../workspace-paths.mjs';
 import { lstat, mkdir, readdir, rename } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { z } from 'zod';
 import { ConfigSchema } from './config.mjs';
 import { CloudflareError, cancelled } from './errors.mjs';
@@ -195,15 +197,17 @@ export async function deploymentRoot(
     cancelled(options.signal);
     const initializedParent = await privateDirectory(
       repositoryRoot,
-      '.alfred/deployment-initialization',
+      privateResource(repositoryRoot, 'deployment-initialization'),
     );
     const activeParent = await privateDirectory(
       repositoryRoot,
-      '.alfred/deployments',
+      privateResource(repositoryRoot, 'deployments'),
     );
     // Persist both new parent names before making any deployment eligible for upload.
     await syncDirectory(repositoryRoot);
-    await syncDirectory(await safePath(repositoryRoot, '.alfred'));
+    await syncDirectory(
+      await safePath(repositoryRoot, privateResource(repositoryRoot)),
+    );
     const initializedRoot = await safePath(initializedParent, deploymentId);
     const activeRoot = await safePath(activeParent, deploymentId);
     await absent(activeRoot);
@@ -263,6 +267,21 @@ export async function deploymentRoot(
 }
 
 export async function saveJournal(context) {
+  if (
+    resolve(context.root) !==
+    resolve(
+      context.repositoryRoot,
+      privateResource(
+        context.repositoryRoot,
+        `deployments/${context.deploymentId}`,
+      ),
+    )
+  )
+    throw new CloudflareError(
+      'PRIVATE_DIRECTORY_CHANGED',
+      '部署工作使用的私有資料目錄已改變；請停止工作並保留原紀錄，先查明結果再恢復。',
+      { unknown: true },
+    );
   checkRecordCapacity(context.journal);
   await atomicJson(context.root, 'journal.json', context.journal);
   await atomicJson(context.root, 'receipt.json', context.journal);
@@ -276,7 +295,7 @@ export async function loadDeployment(repositoryRoot, deploymentId, config) {
     );
   const root = await safePath(
     repositoryRoot,
-    `.alfred/deployments/${deploymentId}`,
+    privateResource(repositoryRoot, `deployments/${deploymentId}`),
   );
   let journal, manifest;
   try {
@@ -334,7 +353,7 @@ export async function loadDeployment(repositoryRoot, deploymentId, config) {
 export async function rejectUnresolved(repositoryRoot, config, except) {
   const directory = await privateDirectory(
     repositoryRoot,
-    '.alfred/deployments',
+    privateResource(repositoryRoot, 'deployments'),
   );
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     if (entry.name === except) continue;

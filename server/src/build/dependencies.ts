@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { runControlledProcess } from '../runtime/process.js';
 import { buildProcessEnvironment } from '../runtime/environment.js';
 import { BuildInputError } from './inputs.js';
-import { isMissing, safePath } from '../files/io.js';
+import { isBuildSnapshotResource, isMissing, safePath } from '../files/io.js';
 
 export interface SnapshotDependencyOptions {
   readonly repositoryRoot: string;
@@ -30,11 +30,7 @@ export async function prepareSnapshotDependencies(
   const root = resolve(options.repositoryRoot);
   const snapshot = resolve(options.snapshotRoot);
   const key = relative(root, snapshot);
-  if (
-    !/^\.alfred\/builds\/[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\/snapshot$/.test(
-      key,
-    )
-  )
+  if (!isBuildSnapshotResource(root, key))
     throw new BuildInputError(
       'INVALID_SNAPSHOT_DESTINATION',
       '依賴只能建立於本job的私有快照。',

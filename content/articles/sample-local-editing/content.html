@@ -135,14 +135,14 @@ pnpm build</code></pre>
 <p>
   Docker 使用的專案工作目錄也是主機上的真實資料；停止或重建容器不會自動刪除內容。
   需要備份時先停止服務，再用備份工具保存完整專案的必要資料及隱藏檔，並保留檔案權限。
-  至少包含 <code>content/</code>、<code>media/source/</code>、<code>.alfred/</code> 與對應的
+  至少包含 <code>content/</code>、<code>media/source/</code>、<code>.foliohaven/</code> 與對應的
   <code>dist/</code>，以及你修改過的程式、設定和 lockfile。
 </p>
 <pre><code class="language-bash">docker compose down
 # 完成主機資料備份後，再啟動原有專案。
 docker compose up -d --wait --wait-timeout 600</code></pre>
 <p>
-  <code>.alfred/</code> 除了處理快取，也保存交易、工作與復原證據，不能把整個目錄當成可任意清空的暫存檔。
+  <code>.foliohaven/</code> 除了處理快取，也保存交易、工作與復原證據，不能把整個目錄當成可任意清空的暫存檔。
   只備份 dist 足以保存公開網站，卻無法還原完整的作者編輯資料。
   還原備份時使用同一組一致資料，先在獨立副本確認可啟動、閱讀、編輯與更新。
 </p>
@@ -157,7 +157,7 @@ docker compose up -d --wait --wait-timeout 600</code></pre>
 <p>
   如果正常啟動因來源無效、網站產物無法確認，或存在未完成的復原工作而失敗，
   先保留資料並查看日誌。修復模式提供 Studio 的檢查與復原入口，
-  不會自動覆蓋網站，也不會刪除 <code>.alfred/</code>。
+  不會自動覆蓋網站，也不會刪除 <code>.foliohaven/</code>。
 </p>
 <pre><code class="language-bash">docker compose stop app
 docker compose up -d --build --wait --wait-timeout 600 repair</code></pre>
@@ -174,7 +174,7 @@ docker compose up -d --wait --wait-timeout 600 app</code></pre>
 <h2 id="customized-upgrades">更新版本時保留自己的網站</h2>
 <ol>
   <li>先閱讀新版本的 CHANGELOG.md，確認功能、相容性及需要調整的設定。</li>
-  <li>停止作者工作階段並備份完整專案，包括自己的 React／Astro／CSS、頁面登錄、設定、文章、原始媒體及 .alfred／dist。</li>
+  <li>停止作者工作階段並備份完整專案，包括自己的 React／Astro／CSS、頁面登錄、設定、文章、原始媒體及 .foliohaven／dist。</li>
   <li>在獨立的專案副本整合新版本；保留自訂頁面、共用版型與內容，不要用新版整包覆蓋自己的網站。</li>
   <li>依 README 配置相符的工具與依賴；Docker 使用者使用對應版本的 Dockerfile 重新建置工作環境。</li>
   <li>完成來源檢查、型別與相關測試，確認 4321 的頁面與日常 Studio 操作，再成功更新網站並檢查 4322。</li>

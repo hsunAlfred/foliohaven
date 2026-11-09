@@ -21,7 +21,7 @@ async function fixture(): Promise<string> {
 }
 async function prepare(
   root: string,
-  resource = '.alfred/reports/playwright',
+  resource = '.foliohaven/reports/playwright',
 ): Promise<void> {
   await runControlledProcess({
     command: process.execPath,
@@ -45,17 +45,20 @@ afterEach(async () => {
 describe('owner-only private tool directories', () => {
   it('tightens owned directories and preserves existing file bytes', async () => {
     const root = await fixture();
-    await mkdir(join(root, '.alfred'));
-    await chmod(join(root, '.alfred'), 0o755);
-    await writeFile(join(root, '.alfred/existing.txt'), 'unchanged fixture');
+    await mkdir(join(root, '.foliohaven'));
+    await chmod(join(root, '.foliohaven'), 0o755);
+    await writeFile(
+      join(root, '.foliohaven/existing.txt'),
+      'unchanged fixture',
+    );
     await prepare(root);
     for (const path of [
-      '.alfred',
-      '.alfred/reports',
-      '.alfred/reports/playwright',
+      '.foliohaven',
+      '.foliohaven/reports',
+      '.foliohaven/reports/playwright',
     ])
       expect((await lstat(join(root, path))).mode & 0o777).toBe(0o700);
-    expect(await readFile(join(root, '.alfred/existing.txt'), 'utf8')).toBe(
+    expect(await readFile(join(root, '.foliohaven/existing.txt'), 'utf8')).toBe(
       'unchanged fixture',
     );
   });
@@ -63,7 +66,7 @@ describe('owner-only private tool directories', () => {
     const root = await fixture();
     await mkdir(join(root, 'victim'));
     await chmod(join(root, 'victim'), 0o755);
-    await symlink('victim', join(root, '.alfred'));
+    await symlink('victim', join(root, '.foliohaven'));
     await expect(prepare(root)).rejects.toMatchObject({
       code: 'PROCESS_EXITED',
     });
@@ -71,9 +74,11 @@ describe('owner-only private tool directories', () => {
   });
   it('rejects identifiers outside the fixed private tree', async () => {
     const root = await fixture();
-    await expect(prepare(root, '.alfred/../outside')).rejects.toMatchObject({
-      code: 'PROCESS_EXITED',
-    });
+    await expect(prepare(root, '.foliohaven/../outside')).rejects.toMatchObject(
+      {
+        code: 'PROCESS_EXITED',
+      },
+    );
     await expect(lstat(join(root, 'outside'))).rejects.toMatchObject({
       code: 'ENOENT',
     });

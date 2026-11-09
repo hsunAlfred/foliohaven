@@ -2,6 +2,12 @@ import { constants } from 'node:fs';
 import { copyFile, lstat, mkdir, open, rename } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import {
+  privateResource as workspaceResource,
+  privateDirectoryName as workspaceDirectory,
+  isBuildSnapshotResource as workspaceSnapshot,
+  pinPrivateDirectory as pinWorkspace,
+} from '../../../scripts/workspace-paths.mjs';
 
 export class RepositoryError extends Error {
   constructor(
@@ -13,6 +19,39 @@ export class RepositoryError extends Error {
     super(message);
     this.name = 'RepositoryError';
   }
+}
+function privateDirectoryValue<T>(read: () => T): T {
+  try {
+    return read();
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      'code' in error &&
+      [
+        'PRIVATE_DIRECTORY_INVALID',
+        'PRIVATE_DIRECTORY_PERMISSIONS',
+        'PRIVATE_DIRECTORY_CHANGED',
+        'PRIVATE_RESOURCE_INVALID',
+      ].includes(String(error.code))
+    )
+      throw new RepositoryError(String(error.code), error.message);
+    throw error;
+  }
+}
+export function privateDirectoryName(root: string): '.foliohaven' | '.alfred' {
+  return privateDirectoryValue(() => workspaceDirectory(root));
+}
+export function privateResource(root: string, resource = ''): string {
+  return privateDirectoryValue(() => workspaceResource(root, resource));
+}
+export function isBuildSnapshotResource(
+  root: string,
+  resource: string,
+): boolean {
+  return privateDirectoryValue(() => workspaceSnapshot(root, resource));
+}
+export function pinPrivateDirectory(root: string): () => void {
+  return privateDirectoryValue(() => pinWorkspace(root));
 }
 export function isMissing(error: unknown): boolean {
   return error instanceof Error && 'code' in error && error.code === 'ENOENT';
@@ -125,7 +164,7 @@ export async function safeMkdir(root: string, resource: string): Promise<void> {
           '資源必須是一般目錄。',
         );
       if (
-        prefix.startsWith('.alfred') &&
+        /^(?:\.foliohaven|\.alfred)(?:\/|$)/u.test(prefix) &&
         ((await lstat(target)).mode & 0o077) !== 0
       )
         throw new RepositoryError(

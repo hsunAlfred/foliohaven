@@ -53,7 +53,7 @@ async function fixture() {
   );
   roots.push(repositoryRoot);
   const deploymentId = randomUUID();
-  const root = join(repositoryRoot, '.alfred/deployments', deploymentId);
+  const root = join(repositoryRoot, '.foliohaven/deployments', deploymentId);
   const files = [
     {
       path: 'index.html',
@@ -94,7 +94,7 @@ async function fixture() {
   await put(root, 'receipt.json', journal);
   await put(
     repositoryRoot,
-    `.alfred/reports/cloudflare/${deploymentId}/domain-verification.json`,
+    `.foliohaven/reports/cloudflare/${deploymentId}/domain-verification.json`,
     { status: 'passed', domain, checkedAt: stamp },
   );
   return { repositoryRoot, root, deploymentId, journal, config: target };
@@ -137,7 +137,7 @@ function report(
 async function savedReport(f: Awaited<ReturnType<typeof fixture>>) {
   return json(
     f.repositoryRoot,
-    `.alfred/reports/cloudflare/${f.deploymentId}/domain-verification.json`,
+    `.foliohaven/reports/cloudflare/${f.deploymentId}/domain-verification.json`,
   );
 }
 

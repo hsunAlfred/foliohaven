@@ -23,6 +23,17 @@ export function header(
     throw new HttpError('DUPLICATE_HEADER', '必要標頭不可重複。', 400);
   return value;
 }
+/** Resolve both aliases before choosing one so a legacy duplicate cannot hide. */
+export function compatibleHeader(
+  request: IncomingMessage,
+  suffix: 'process-token' | 'studio-origin' | 'editor-id',
+): string | undefined {
+  const current = header(request, `x-foliohaven-${suffix}`);
+  const legacy = header(request, `x-alfred-${suffix}`);
+  if (current !== undefined && legacy !== undefined && current !== legacy)
+    throw new HttpError('CONFLICTING_HEADER', '新舊必要標頭內容不一致。', 400);
+  return current ?? legacy;
+}
 export function authenticate(request: IncomingMessage, token: string): void {
   const host = header(request, 'host');
   let validHost = false;
@@ -34,7 +45,7 @@ export function authenticate(request: IncomingMessage, token: string): void {
       /* 無效Host一律拒絕 */
     }
   }
-  const supplied = header(request, 'x-alfred-process-token');
+  const supplied = compatibleHeader(request, 'process-token');
   if (
     !validHost ||
     supplied === undefined ||
@@ -45,7 +56,7 @@ export function authenticate(request: IncomingMessage, token: string): void {
 }
 export function mutationOrigin(request: IncomingMessage): string {
   const origin = header(request, 'origin');
-  const observed = header(request, 'x-alfred-studio-origin');
+  const observed = compatibleHeader(request, 'studio-origin');
   let valid = false;
   if (origin && origin === observed) {
     try {

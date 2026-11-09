@@ -1,3 +1,4 @@
+import { privateResource } from './workspace-paths.mjs';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { access, lstat, mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -21,13 +22,16 @@ await assert.rejects(access(join(source, '.git')), { code: 'ENOENT' });
 assert.deepEqual(
   JSON.parse(
     await readFile(
-      join(source, '.alfred/release-check-workspace.json'),
+      join(source, privateResource(source, 'release-check-workspace.json')),
       'utf8',
     ),
   ),
   { schemaVersion: 1, purpose: 'release-validation' },
 );
-const report = join(source, '.alfred/reports/release-native-check');
+const report = join(
+  source,
+  privateResource(source, 'reports/release-native-check'),
+);
 await mkdir(report, { recursive: true, mode: 0o700 });
 const environment = Object.fromEntries(
   [

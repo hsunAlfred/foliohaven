@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   builtPreviewUrl,
   previewUrl,
@@ -6,6 +6,16 @@ import {
 } from '../../studio/src/preview-urls.js';
 
 describe('public preview links', () => {
+  it('uses the Foliohaven compile-time ports when configured', () => {
+    vi.stubGlobal('__FOLIOHAVEN_SOURCE_PREVIEW_PORT__', 8121);
+    vi.stubGlobal('__FOLIOHAVEN_BUILT_PREVIEW_PORT__', 8122);
+    expect(sourcePreviewUrl('/', 'http://localhost:5173')).toBe(
+      'http://localhost:8121/',
+    );
+    expect(builtPreviewUrl('/', 'http://localhost:5173')).toBe(
+      'http://localhost:8122/',
+    );
+  });
   it('uses the current Studio hostname and the distinct public preview ports', () => {
     const origin = 'http://192.168.5.4:5173';
     expect(sourcePreviewUrl('/rust/example/', origin)).toBe(

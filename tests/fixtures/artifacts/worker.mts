@@ -11,8 +11,8 @@ const store = new ArtifactStore({
   fault: async (event) => {
     if (mode === 'rename-failure' && event.phase === 'before-new-rename')
       await rename(
-        join(root, `.alfred/builds/${id}/output`),
-        join(root, `.alfred/builds/${id}/unavailable`),
+        join(root, `.foliohaven/builds/${id}/output`),
+        join(root, `.foliohaven/builds/${id}/unavailable`),
       );
     if (event.phase === (phase as ArtifactFaultPhase)) process.exit(77);
   },

@@ -1,3 +1,4 @@
+import { privateResource } from '../workspace-paths.mjs';
 import { constants } from 'node:fs';
 import { open, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -17,8 +18,24 @@ const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const object = (value) =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
-const message = (id) => `alfred-wiki deploy ${id}`;
-const restoreMessage = (id) => `alfred-wiki restore ${id}`;
+const message = (id) => `foliohaven deploy ${id}`;
+const restoreMessage = (id) => `foliohaven restore ${id}`;
+function operationMessage(value) {
+  if (typeof value !== 'string') return null;
+  const match =
+    /^(?:foliohaven|alfred-wiki) (deploy|restore) ([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})$/u.exec(
+      value,
+    );
+  return match && uuid.test(match[2])
+    ? { operation: match[1], deploymentId: match[2] }
+    : null;
+}
+function matchesOperation(value, operation, deploymentId) {
+  const parsed = operationMessage(value);
+  return (
+    parsed?.operation === operation && parsed.deploymentId === deploymentId
+  );
+}
 const cancelled = (signal) => {
   if (signal?.aborted)
     throw new CloudflareError('CLOUDFLARE_CANCELLED', '操作已取消。');
@@ -56,12 +73,9 @@ function currentDeployment(result) {
   return {
     versionId: deployment.versions[0].version_id,
     deploymentId: deployment.id,
-    message:
-      /^alfred-wiki (?:deploy|restore) [a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(
-        deployment.annotations?.['workers/message'] ?? '',
-      )
-        ? deployment.annotations['workers/message']
-        : null,
+    message: operationMessage(deployment.annotations?.['workers/message'])
+      ? deployment.annotations['workers/message']
+      : null,
   };
 }
 function compatible(settings, version, compatibilityDate, ownDeployment) {
@@ -199,12 +213,16 @@ export function createWorker({
     if (
       !uuid.test(context?.deploymentId ?? '') ||
       resolve(context.root) !==
-        resolve(repositoryRoot, '.alfred/deployments', context.deploymentId)
+        resolve(
+          repositoryRoot,
+          privateResource(repositoryRoot, 'deployments'),
+          context.deploymentId,
+        )
     )
       throw new CloudflareError('WORKER_CONTEXT_INVALID', '部署紀錄位置無效。');
     return ensurePrivateDirectory(
       repositoryRoot,
-      `.alfred/deployments/${context.deploymentId}`,
+      privateResource(repositoryRoot, `deployments/${context.deploymentId}`),
     );
   }
   async function api(suffix, { method = 'GET', body, missing = false } = {}) {
@@ -337,8 +355,9 @@ export function createWorker({
       : null;
     // Wrangler 把 deploy 的 message／tag 寫在版本上；deployment 的註記可不同。
     const versionMessage =
-      tag !== null && version.annotations?.['workers/message'] === message(tag)
-        ? message(tag)
+      tag !== null &&
+      matchesOperation(version.annotations?.['workers/message'], 'deploy', tag)
+        ? version.annotations['workers/message']
         : null;
     compatible(
       settings,
@@ -427,7 +446,10 @@ export function createWorker({
     const bytes = Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
     ensurePrivateDirectory(
       repositoryRoot,
-      `.alfred/deployments/${context.deploymentId}/wrangler`,
+      privateResource(
+        repositoryRoot,
+        `deployments/${context.deploymentId}/wrangler`,
+      ),
     );
     const configRelative = 'wrangler/wrangler.json';
     const path = join(root, configRelative);
@@ -518,7 +540,10 @@ export function createWorker({
   }
   async function execute(context, dryRun) {
     const path = await checkStage(context);
-    const resource = `.alfred/deployments/${context.deploymentId}/wrangler`;
+    const resource = privateResource(
+      repositoryRoot,
+      `deployments/${context.deploymentId}/wrangler`,
+    );
     const home = ensurePrivateDirectory(repositoryRoot, `${resource}/home`);
     const environment = buildProcessEnvironment({
       HOME: home,
@@ -637,8 +662,11 @@ export function createWorker({
       );
     }
     const own =
-      remote?.versionMessage === message(context.deploymentId) &&
-      remote?.tag === context.deploymentId;
+      matchesOperation(
+        remote?.versionMessage,
+        'deploy',
+        context.deploymentId,
+      ) && remote?.tag === context.deploymentId;
     if (
       current.after &&
       own &&
@@ -664,7 +692,7 @@ export function createWorker({
       remote !== null &&
       current.before?.versionId === remote.versionId &&
       (current.status === 'restore-intent' || current.status === 'restored') &&
-      remote.message === restoreMessage(context.deploymentId);
+      matchesOperation(remote.message, 'restore', context.deploymentId);
     if (
       restored &&
       restoredFingerprint !== undefined &&

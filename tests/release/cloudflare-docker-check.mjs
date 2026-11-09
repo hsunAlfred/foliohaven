@@ -1,3 +1,4 @@
+import { privateResource } from '../../scripts/workspace-paths.mjs';
 // Host Docker acceptance only: never run against an author's workspace.
 import assert from 'node:assert/strict';
 import { constants } from 'node:fs';
@@ -15,8 +16,10 @@ import {
 const root = process.cwd();
 const began = Date.now();
 const timeoutMs = 30 * 60_000;
-const reportResource =
-  '.alfred/reports/release-docker-check/cloudflare-dry-run.json';
+const reportResource = privateResource(
+  root,
+  'reports/release-docker-check/cloudflare-dry-run.json',
+);
 const fakeConfig = Object.freeze({
   schemaVersion: 1,
   accountId: '0'.repeat(32),
@@ -92,12 +95,19 @@ try {
   assert.equal(process.platform, 'linux');
   assert.notEqual(process.getuid?.(), 0);
   const marker = JSON.parse(
-    await readOwnerFile(root, '.alfred/release-check-workspace.json', 4096),
+    await readOwnerFile(
+      root,
+      privateResource(root, 'release-check-workspace.json'),
+      4096,
+    ),
   );
   assert.deepEqual(marker, { schemaVersion: 1, purpose: 'release-validation' });
   for (const resource of ['.git', 'cloudflare.config.json', '.env.cloudflare'])
     await absent(resource);
-  await privateDirectory(root, '.alfred/reports/release-docker-check');
+  await privateDirectory(
+    root,
+    privateResource(root, 'reports/release-docker-check'),
+  );
   reportAllowed = true;
   progress('隔離副本標記通過；僅使用假的部署目標，不建立憑證、不連線雲端');
   const configPath = await safePath(root, 'cloudflare.config.json');
@@ -188,7 +198,7 @@ try {
   const deploymentId = commandResult.deploymentId;
   const deploymentPath = await safePath(
     root,
-    `.alfred/deployments/${deploymentId}`,
+    privateResource(root, `deployments/${deploymentId}`),
   );
   const receipt = JSON.parse(
     await readOwnerFile(deploymentPath, 'receipt.json', 64 * 1024 * 1024),

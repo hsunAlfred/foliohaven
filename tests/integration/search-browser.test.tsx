@@ -1,12 +1,7 @@
+import { privateResource } from '../../scripts/workspace-paths.mjs';
+import { ensurePrivateDirectory } from '../../scripts/private-directory.mjs';
 import { it, expect } from 'vitest';
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  readdir,
-  rm,
-  writeFile,
-} from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
@@ -17,8 +12,10 @@ import { uiModels } from '../fixtures/ui-models.js';
 
 it('search hydrates the static first page and preserves URL, history, errors and no-JS behavior in three real browsers', async () => {
   const repository = fileURLToPath(new URL('../../', import.meta.url));
-  const parent = join(repository, '.alfred/environment-checks');
-  await mkdir(parent, { recursive: true, mode: 0o700 });
+  const parent = ensurePrivateDirectory(
+    repository,
+    privateResource(repository, 'environment-checks'),
+  );
   const probe = await mkdtemp(join(parent, 'search-browser-'));
   const { model } = uiModels();
   const initial = model.listPages.find((page) => page.kind === 'articles');

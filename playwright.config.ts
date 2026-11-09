@@ -1,14 +1,29 @@
+import { privateResource } from './scripts/workspace-paths.mjs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 import { ensurePrivateDirectory } from './scripts/private-directory.mjs';
 
 const repositoryRoot = fileURLToPath(new URL('.', import.meta.url));
-ensurePrivateDirectory(repositoryRoot, '.alfred/reports/playwright');
+const lane = process.env.FOLIOHAVEN_VERIFICATION_LANE;
+if (
+  lane !== undefined &&
+  !['quality', 'e2e-chromium', 'e2e-firefox', 'e2e-webkit'].includes(lane)
+)
+  throw new Error('驗證 lane 不合法。');
+const reports = ensurePrivateDirectory(
+  repositoryRoot,
+  privateResource(
+    repositoryRoot,
+    lane
+      ? `reports/verification/framework/${lane}/playwright`
+      : 'reports/playwright',
+  ),
+);
 
 export default defineConfig({
   testDir: `${repositoryRoot}tests/e2e`,
   testMatch: '**/*.spec.ts',
-  outputDir: `${repositoryRoot}.alfred/reports/playwright/results`,
+  outputDir: `${reports}/results`,
   fullyParallel: false,
   forbidOnly: true,
   workers: 1,
@@ -21,14 +36,14 @@ export default defineConfig({
     [
       'html',
       {
-        outputFolder: `${repositoryRoot}.alfred/reports/playwright/html`,
+        outputFolder: `${reports}/html`,
         open: 'never',
       },
     ],
-    [
-      'junit',
-      { outputFile: `${repositoryRoot}.alfred/reports/playwright/results.xml` },
-    ],
+    ['junit', { outputFile: `${reports}/results.xml` }],
+    ...(lane
+      ? [['json', { outputFile: `${reports}/../playwright.json` }] as const]
+      : []),
   ],
   use: {
     headless: true,

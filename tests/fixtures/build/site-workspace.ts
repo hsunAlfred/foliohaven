@@ -1,6 +1,7 @@
 import { cp, mkdir, readdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { privateResource } from '../../../scripts/workspace-paths.mjs';
 import { randomUUID } from 'node:crypto';
 import { committedWorkspace } from './committed-workspace.js';
 import {
@@ -31,7 +32,13 @@ async function overlaySources(root: string, sourceRoot: string) {
         !relative(source, path)
           .split('/')
           .some((part) =>
-            ['node_modules', 'dist', '.astro', '.alfred'].includes(part),
+            [
+              'node_modules',
+              'dist',
+              '.astro',
+              '.foliohaven',
+              '.alfred',
+            ].includes(part),
           ),
     });
   }
@@ -200,7 +207,7 @@ export async function siteWorkspace(empty = false, sourceRoot = repository) {
       );
     }
     const jobId = randomUUID();
-    const job = join(root, '.alfred/builds', jobId);
+    const job = join(root, privateResource(root, 'builds'), jobId);
     await mkdir(job, { recursive: true, mode: 0o700 });
     const snapshot = join(job, 'snapshot');
     const inputs = await scanBuildInputs(root);

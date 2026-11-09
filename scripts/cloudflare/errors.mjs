@@ -21,6 +21,28 @@ export function safeDiagnostic(error) {
       unknown: error.unknown,
       retryable: error.retryable,
     };
+  if (error instanceof Error && error.code === 'PRIVATE_DIRECTORY_CHANGED')
+    return {
+      code: error.code,
+      message:
+        '工作執行期間私有資料目錄已改變；請停止工作並保留原紀錄，先查明部署結果再恢復。',
+      unknown: true,
+      retryable: false,
+    };
+  if (
+    error instanceof Error &&
+    [
+      'PRIVATE_DIRECTORY_INVALID',
+      'PRIVATE_DIRECTORY_PERMISSIONS',
+      'PRIVATE_RESOURCE_INVALID',
+    ].includes(error.code)
+  )
+    return {
+      code: error.code,
+      message: '選定的私有資料目錄或權限無效；請修正，不會改用另一個目錄。',
+      unknown: false,
+      retryable: false,
+    };
   if (
     error instanceof Error &&
     ['ArtifactError', 'RepositoryError', 'ProcessFailure'].includes(

@@ -67,7 +67,7 @@ async function fixture(
   roots.push(root);
   const id = randomUUID();
   await tree(root, 'dist', 'OLD_ARTIFACT');
-  await tree(root, `.alfred/builds/${id}/output`, 'NEW_ARTIFACT');
+  await tree(root, `.foliohaven/builds/${id}/output`, 'NEW_ARTIFACT');
   const store = new ArtifactStore({ repositoryRoot: root, ...config });
   return { root, id, store };
 }
@@ -154,7 +154,7 @@ function child(root: string, mode: string, id: string, phase = '') {
 describe('artifact tree manifest and durable promotion', () => {
   it('hashes complete names, empty directories and bytes; rejects symlinks without following them', async () => {
     const { root, id, store } = await fixture();
-    const source = `.alfred/builds/${id}/output`;
+    const source = `.foliohaven/builds/${id}/output`;
     const initial = await scanArtifactTree(root, source);
     expect(initial?.fileCount).toBe(2);
     await mkdir(join(root, source, 'another-empty'));
@@ -172,7 +172,7 @@ describe('artifact tree manifest and durable promotion', () => {
     const before = await scanArtifactTree(root, 'dist');
     const candidate = await scanArtifactTree(
       root,
-      `.alfred/builds/${id}/output`,
+      `.foliohaven/builds/${id}/output`,
     );
     const result = await store.promote(id, options);
     expect(await index(root)).toBe('NEW_ARTIFACT');
@@ -183,12 +183,13 @@ describe('artifact tree manifest and durable promotion', () => {
       fileCount: 2,
     });
     expect(
-      (await scanArtifactTree(root, `.alfred/artifacts/${id}/backup`))?.digest,
+      (await scanArtifactTree(root, `.foliohaven/artifacts/${id}/backup`))
+        ?.digest,
     ).toBe(before?.digest);
     expect(
       JSON.parse(
         await readFile(
-          join(root, `.alfred/artifacts/${id}/manifest.json`),
+          join(root, `.foliohaven/artifacts/${id}/manifest.json`),
           'utf8',
         ),
       ).manifest.digest,
@@ -284,14 +285,14 @@ describe('artifact tree manifest and durable promotion', () => {
     const { root, id, store } = await fixture();
     const first = await store.promote(id, options);
     const secondId = randomUUID();
-    await tree(root, `.alfred/builds/${secondId}/output`, 'THIRD_ARTIFACT');
+    await tree(root, `.foliohaven/builds/${secondId}/output`, 'THIRD_ARTIFACT');
     await store.promote(secondId, options);
     expect(await index(root)).toBe('THIRD_ARTIFACT');
     await expect(
-      lstat(join(root, `.alfred/artifacts/${id}/backup`)),
+      lstat(join(root, `.foliohaven/artifacts/${id}/backup`)),
     ).rejects.toMatchObject({ code: 'ENOENT' });
     expect(
-      (await scanArtifactTree(root, `.alfred/artifacts/${secondId}/backup`))
+      (await scanArtifactTree(root, `.foliohaven/artifacts/${secondId}/backup`))
         ?.digest,
     ).toBe(first.digest);
     expect((await store.committedProof(id))?.digest).toBe(first.digest);
@@ -301,15 +302,19 @@ describe('artifact tree manifest and durable promotion', () => {
     await store.promote(id, options);
     await resolveRecovery(store, id, 'restore-backup');
     const next = randomUUID();
-    await tree(root, `.alfred/builds/${next}/output`, 'NEXT_VALID_ARTIFACT');
+    await tree(
+      root,
+      `.foliohaven/builds/${next}/output`,
+      'NEXT_VALID_ARTIFACT',
+    );
     await store.promote(next, options);
     let backups = 0;
-    for (const name of await readdir(join(root, '.alfred/artifacts'))) {
+    for (const name of await readdir(join(root, '.foliohaven/artifacts'))) {
       if (!/^[a-f0-9-]{36}$/.test(name)) continue;
       try {
         if (
           (
-            await lstat(join(root, '.alfred/artifacts', name, 'backup'))
+            await lstat(join(root, '.foliohaven/artifacts', name, 'backup'))
           ).isDirectory()
         )
           backups++;
@@ -363,8 +368,8 @@ describe('actual crash and filesystem failure recovery', () => {
       fault: async (event) => {
         if (event.phase === 'before-new-rename')
           await rename(
-            join(root, `.alfred/builds/${id}/output`),
-            join(root, `.alfred/builds/${id}/unavailable`),
+            join(root, `.foliohaven/builds/${id}/output`),
+            join(root, `.foliohaven/builds/${id}/unavailable`),
           );
       },
     });
@@ -390,7 +395,7 @@ describe('actual crash and filesystem failure recovery', () => {
     expect(await store.discardUncommitted(id)).toBe(true);
     expect(await index(root)).toBe('OLD_ARTIFACT');
     const next = randomUUID();
-    await tree(root, `.alfred/builds/${next}/output`, 'COMMITTED');
+    await tree(root, `.foliohaven/builds/${next}/output`, 'COMMITTED');
     await store.promote(next, options);
     expect(await store.discardUncommitted(next)).toBe(false);
     expect(await index(root)).toBe('COMMITTED');
@@ -402,8 +407,8 @@ describe('actual crash and filesystem failure recovery', () => {
       fault: async (event) => {
         if (event.phase === 'before-new-rename')
           await rename(
-            join(root, `.alfred/builds/${id}/output`),
-            join(root, `.alfred/builds/${id}/unavailable`),
+            join(root, `.foliohaven/builds/${id}/output`),
+            join(root, `.foliohaven/builds/${id}/unavailable`),
           );
         if (event.phase === 'before-rollback-rename')
           throw Object.assign(new Error('isolated denied'), { code: 'EACCES' });
@@ -418,12 +423,12 @@ describe('actual crash and filesystem failure recovery', () => {
       reopened.withPreviewGate(async () => true),
     ).rejects.toMatchObject({ code: 'BUILD_RECOVERY_REQUIRED' });
     const another = randomUUID();
-    await tree(root, `.alfred/builds/${another}/output`, 'OTHER');
+    await tree(root, `.foliohaven/builds/${another}/output`, 'OTHER');
     await expect(reopened.promote(another, options)).rejects.toMatchObject({
       code: 'BUILD_RECOVERY_REQUIRED',
     });
     expect(
-      (await readdir(join(root, `.alfred/artifacts/${id}`))).sort(),
+      (await readdir(join(root, `.foliohaven/artifacts/${id}`))).sort(),
     ).toEqual(
       expect.arrayContaining(['backup', 'base', 'prepared', 'journal.json']),
     );
@@ -580,7 +585,7 @@ describe('recovery preconditions, decisions, and cross-process preview gate', ()
     const worker = child(root, 'preview', id);
     await worker.ready();
     const second = randomUUID();
-    await tree(root, `.alfred/builds/${second}/output`, 'NEXT');
+    await tree(root, `.foliohaven/builds/${second}/output`, 'NEXT');
     const contender = new ArtifactStore({
       repositoryRoot: root,
       lockTimeoutMs: 40,
@@ -604,7 +609,7 @@ describe('prepared promotion tickets before the final writer lock', () => {
     const large = Buffer.alloc(24 * 1024 * 1024, 0x37);
     await writeFile(join(root, 'dist/assets/large.webm'), large);
     await writeFile(
-      join(root, `.alfred/builds/${id}/output/assets/large.webm`),
+      join(root, `.foliohaven/builds/${id}/output/assets/large.webm`),
       large,
     );
     const repository = new FileRepository({ repositoryRoot: root });
@@ -624,19 +629,19 @@ describe('prepared promotion tickets before the final writer lock', () => {
     expect(
       (
         await lstat(
-          join(root, `.alfred/artifacts/${id}/base/assets/large.webm`),
+          join(root, `.foliohaven/artifacts/${id}/base/assets/large.webm`),
         )
       ).size,
     ).toBe(large.byteLength);
     expect(
       (
         await lstat(
-          join(root, `.alfred/artifacts/${id}/prepared/assets/large.webm`),
+          join(root, `.foliohaven/artifacts/${id}/prepared/assets/large.webm`),
         )
       ).size,
     ).toBe(large.byteLength);
     const preparedDigest = (
-      await scanArtifactTree(root, `.alfred/artifacts/${id}/prepared`)
+      await scanArtifactTree(root, `.foliohaven/artifacts/${id}/prepared`)
     )?.digest;
     try {
       await repository.withBuildInputLock(async () => {
@@ -679,7 +684,7 @@ describe('prepared promotion tickets before the final writer lock', () => {
     expect(
       JSON.parse(
         await readFile(
-          join(root, `.alfred/artifacts/${id}/journal.json`),
+          join(root, `.foliohaven/artifacts/${id}/journal.json`),
           'utf8',
         ),
       ).status,
@@ -703,7 +708,7 @@ describe('prepared promotion tickets before the final writer lock', () => {
         expect(
           JSON.parse(
             await readFile(
-              join(root, `.alfred/artifacts/${id}/journal.json`),
+              join(root, `.foliohaven/artifacts/${id}/journal.json`),
               'utf8',
             ),
           ).status,
@@ -715,7 +720,7 @@ describe('prepared promotion tickets before the final writer lock', () => {
     expect(
       JSON.parse(
         await readFile(
-          join(root, `.alfred/artifacts/${id}/journal.json`),
+          join(root, `.foliohaven/artifacts/${id}/journal.json`),
           'utf8',
         ),
       ).status,
@@ -729,7 +734,7 @@ describe('prepared promotion tickets before the final writer lock', () => {
       const changedPath =
         changed === 'dist'
           ? 'dist/index.html'
-          : `.alfred/builds/${id}/output/index.html`;
+          : `.foliohaven/builds/${id}/output/index.html`;
       await writeFile(join(root, changedPath), 'EXTERNAL_AFTER_PREPARE');
       try {
         await expect(ticket.promote()).rejects.toMatchObject({

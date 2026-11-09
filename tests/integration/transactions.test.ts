@@ -453,7 +453,7 @@ describe('SAVE-01：raw revision、精確 precondition、編輯模式與一致�
         3,
       ),
     ).rejects.toMatchObject({ code: 'EMPTY_SOURCE' });
-    expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
   });
 });
 describe('SAVE-02：真實跨程序鎖、階段中止與未知版本復原', () => {
@@ -469,11 +469,12 @@ describe('SAVE-02：真實跨程序鎖、階段中止與未知版本復原', () 
     await expect(contender.commit(save)).rejects.toMatchObject({
       code: 'WORKSPACE_BUSY',
     });
-    const inode = (await lstat(join(root, '.alfred/locks/writer.lock'))).ino;
+    const inode = (await lstat(join(root, '.foliohaven/locks/writer.lock')))
+      .ino;
     lease.child.kill('SIGKILL');
     await lease.done;
     await repository.commit(save);
-    expect((await lstat(join(root, '.alfred/locks/writer.lock'))).ino).toBe(
+    expect((await lstat(join(root, '.foliohaven/locks/writer.lock'))).ino).toBe(
       inode,
     );
   });
@@ -566,7 +567,7 @@ describe('SAVE-02：真實跨程序鎖、階段中止與未知版本復原', () 
       resolution(recovered, id, 'keep-current'),
     ).rejects.toMatchObject({ code: 'RECOVERY_ALREADY_RESOLVED' });
     const observed = await readdir(
-      join(root, `.alfred/transactions/${id}/observed`),
+      join(root, `.foliohaven/transactions/${id}/observed`),
     );
     expect(
       observed.some((name) => name.endsWith(digest('<p>external third</p>\n'))),
@@ -627,7 +628,7 @@ describe('SAVE-02：真實跨程序鎖、階段中止與未知版本復原', () 
     ).rejects.toMatchObject({ code: 'EXTERNAL_CHANGE' });
     const id = required((await result.repository.listRecoveries())[0]).id;
     expect((await lstat(join(root, required(keys[0])))).ino).not.toBe(
-      (await lstat(join(root, `.alfred/transactions/${id}/base/0`))).ino,
+      (await lstat(join(root, `.foliohaven/transactions/${id}/base/0`))).ino,
     );
     await resolution(result.repository, id, 'keep-current');
     expect((await actual(root))[0]).toBe('<p>third</p>');
@@ -656,12 +657,14 @@ describe('SAVE-02：真實跨程序鎖、階段中止與未知版本復原', () 
     await expect(
       second.repository.commit(await request(second.repository)),
     ).rejects.toBeInstanceOf(Error);
-    const journals = await readdir(join(second.root, '.alfred/transactions'));
+    const journals = await readdir(
+      join(second.root, '.foliohaven/transactions'),
+    );
     expect(
       await readFile(
         join(
           second.root,
-          `.alfred/transactions/${required(journals[0])}/base/0`,
+          `.foliohaven/transactions/${required(journals[0])}/base/0`,
         ),
         'utf8',
       ),
@@ -750,7 +753,9 @@ describe('SAVE-02：trash、還原與保留政策', () => {
       (await repository.recovery(removed.transactionId)).value.status,
     ).toBe('resolved');
     await expect(
-      lstat(join(root, `.alfred/transactions/${removed.transactionId}/base`)),
+      lstat(
+        join(root, `.foliohaven/transactions/${removed.transactionId}/base`),
+      ),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
   it('成功備份至少7天且至少最近20筆，僅超過兩條件才自動prune', async () => {
@@ -835,13 +840,13 @@ describe('SAVE-02：審查邊界、讀依賴與復原決議本身中止', () => 
   });
   it('既有private目錄若group/world可讀會拒絕，不擴大或自行放寬權限', async () => {
     const { root } = await fixture();
-    await chmod(join(root, '.alfred'), 0o755);
+    await chmod(join(root, '.foliohaven'), 0o755);
     const repository = new FileRepository({ repositoryRoot: root });
     await expect(repository.initialize()).rejects.toMatchObject({
       code: 'PRIVATE_DIRECTORY_PERMISSIONS',
     });
-    expect((await lstat(join(root, '.alfred'))).mode & 0o777).toBe(0o755);
-    await chmod(join(root, '.alfred'), 0o700);
+    expect((await lstat(join(root, '.foliohaven'))).mode & 0o777).toBe(0o755);
+    await chmod(join(root, '.foliohaven'), 0o700);
   });
   for (const external of ['taxonomy-bytes', 'article-added'] as const)
     it(`loadContent的讀依賴在提交前核對 ${external}，不只核對寫入文章`, async () => {
@@ -959,7 +964,9 @@ describe('SAVE-02：審查邊界、讀依賴與復原決議本身中止', () => 
         (await reopened.recovery(removed.transactionId)).value.status,
       ).toBe('resolved');
       await expect(
-        lstat(join(root, `.alfred/transactions/${removed.transactionId}/base`)),
+        lstat(
+          join(root, `.foliohaven/transactions/${removed.transactionId}/base`),
+        ),
       ).rejects.toMatchObject({ code: 'ENOENT' });
     });
 });
@@ -1077,7 +1084,7 @@ describe('SAVE-02：搬移邊界未知版本與bounded I/O', () => {
       ),
     ).rejects.toMatchObject({ code: 'SOURCE_TOO_LARGE', status: 422 });
     await writeFile(
-      join(root, '.alfred/workspace-state.json'),
+      join(root, '.foliohaven/workspace-state.json'),
       Buffer.from([255, 254, 253]),
     );
     try {
@@ -1343,7 +1350,7 @@ describe('SAVE-02：損壞journal不得擴張目錄恢復範圍', () => {
       const article = await lstat(join(root, 'content/articles/example'));
       const path = join(
         root,
-        `.alfred/transactions/${saved.transactionId}/journal.json`,
+        `.foliohaven/transactions/${saved.transactionId}/journal.json`,
       );
       const journal = JSON.parse(await readFile(path, 'utf8')) as {
         kind: string;

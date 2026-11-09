@@ -54,7 +54,7 @@ describe('API-01/02：完整本機HTTP契約與來源副作用', () => {
   });
   it('拒絕偽造token/Host/Origin，只有observed Studio origin精確相等才允許mutation', async () => {
     for (const headers of [
-      { 'x-alfred-process-token': 'wrong' },
+      { 'x-foliohaven-process-token': 'wrong' },
       { host: 'evil.invalid' },
       { host: '127.0.0.1.evil.invalid' },
       { host: 'localhost:99999' },
@@ -64,7 +64,7 @@ describe('API-01/02：完整本機HTTP契約與來源副作用', () => {
     }
     for (const headers of [
       { origin: 'http://evil.invalid' },
-      { 'x-alfred-studio-origin': 'http://localhost:5174' },
+      { 'x-foliohaven-studio-origin': 'http://localhost:5174' },
       { origin: 'null' },
       { origin: 'http://localhost:5173/' },
     ]) {
@@ -228,7 +228,7 @@ describe('API-01/02：完整本機HTTP契約與來源副作用', () => {
       headers: { 'idempotency-key': key },
     });
     expect(failed.status).toBe(422);
-    const name = (await readdir(join(root, '.alfred/operations'))).find(
+    const name = (await readdir(join(root, '.foliohaven/operations'))).find(
       (name) => name.endsWith(`--${key}.json`),
     );
     if (!name) throw new Error('failed operation missing');
