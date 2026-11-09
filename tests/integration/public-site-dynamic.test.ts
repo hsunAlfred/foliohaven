@@ -31,7 +31,7 @@ it('public request boundaries reject only protected root prefixes, allowing arti
     '/server/file',
     '/studio/',
     '/content/site.json',
-    '/.alfred/cache/file',
+    '/.foliohaven/cache/file',
     '/media/source/id/original.png',
   ])
     expect(isPrivatePublicRequest(path)).toBe(true);

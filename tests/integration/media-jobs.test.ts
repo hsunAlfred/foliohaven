@@ -90,7 +90,7 @@ describe('MEDIA-JOB-01: durable media completion and immutable job evidence', ()
       onPhase: async (phase) => {
         if (phase === 'receipt-committed')
           await writeFile(
-            join(root, '.alfred/media-records'),
+            join(root, '.foliohaven/media-records'),
             'projection unavailable',
           );
       },
@@ -98,7 +98,7 @@ describe('MEDIA-JOB-01: durable media completion and immutable job evidence', ()
     const asset = await projecting.process(source.value.id, { jobId });
     const proof = await service.committedResult(jobId, payload);
     const originalReceipt = await readFile(
-      join(root, `.alfred/media-job-receipts/${jobId}.json`),
+      join(root, `.foliohaven/media-job-receipts/${jobId}.json`),
       'utf8',
     );
     expect(proof?.result).toEqual({ sourceId: source.value.id, asset });
@@ -114,7 +114,7 @@ describe('MEDIA-JOB-01: durable media completion and immutable job evidence', ()
     for await (const _chunk of file.stream) {
       /* Drain and close the actual descriptor. */
     }
-    await rm(join(root, '.alfred/media-records'));
+    await rm(join(root, '.foliohaven/media-records'));
     const ready = await service.get(source.value.id);
     expect(ready.inputRevision).toBe(source.inputRevision);
     expect(ready.etag).not.toBe(source.etag);
@@ -136,7 +136,7 @@ describe('MEDIA-JOB-01: durable media completion and immutable job evidence', ()
     ).rejects.toMatchObject({ code: 'MEDIA_JOB_RECEIPT_MISMATCH' });
     expect(
       await readFile(
-        join(root, `.alfred/media-job-receipts/${jobId}.json`),
+        join(root, `.foliohaven/media-job-receipts/${jobId}.json`),
         'utf8',
       ),
     ).toBe(originalReceipt);
@@ -183,7 +183,7 @@ describe('MEDIA-JOB-01: durable media completion and immutable job evidence', ()
     ).rejects.toMatchObject({ code: 'PROCESS_EXITED' });
     expect(killed).toBe(true);
     await expect(
-      readFile(join(root, `.alfred/media-records/${source.value.id}.json`)),
+      readFile(join(root, `.foliohaven/media-records/${source.value.id}.json`)),
     ).rejects.toMatchObject({ code: 'ENOENT' });
     const restarted = await manager(
       root,
@@ -263,7 +263,7 @@ describe('MEDIA-JOB-01: durable media completion and immutable job evidence', ()
       preset: 'article-image' as const,
     };
     await service.process(source.value.id, { jobId });
-    const path = join(root, `.alfred/media-job-receipts/${jobId}.json`);
+    const path = join(root, `.foliohaven/media-job-receipts/${jobId}.json`);
     const original = await readFile(path, 'utf8');
     for (const value of [
       '{broken',

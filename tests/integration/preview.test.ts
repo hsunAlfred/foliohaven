@@ -154,7 +154,7 @@ describe('API-02：React共用預覽、隔離與記憶體期限', () => {
       headers: {
         'x-alfred-editor-id': randomUUID(),
         origin: running.url,
-        'x-alfred-studio-origin': running.url,
+        'x-foliohaven-studio-origin': running.url,
       },
     });
     expect(result.status).toBe(201);

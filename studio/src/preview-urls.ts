@@ -1,7 +1,7 @@
 import { RootPathSchema } from '@foliohaven/core';
 
-declare const __ALFRED_SOURCE_PREVIEW_PORT__: number;
-declare const __ALFRED_BUILT_PREVIEW_PORT__: number;
+declare const __FOLIOHAVEN_SOURCE_PREVIEW_PORT__: number;
+declare const __FOLIOHAVEN_BUILT_PREVIEW_PORT__: number;
 
 export function previewUrl(path: string, origin: string, port: number): string {
   RootPathSchema.parse(path);
@@ -30,8 +30,8 @@ export function sourcePreviewUrl(
   origin = currentOrigin(),
 ): string {
   const port =
-    typeof __ALFRED_SOURCE_PREVIEW_PORT__ === 'number'
-      ? __ALFRED_SOURCE_PREVIEW_PORT__
+    typeof __FOLIOHAVEN_SOURCE_PREVIEW_PORT__ === 'number'
+      ? __FOLIOHAVEN_SOURCE_PREVIEW_PORT__
       : 4321;
   return previewUrl(path, origin, port);
 }
@@ -41,8 +41,8 @@ export function builtPreviewUrl(
   origin = currentOrigin(),
 ): string {
   const port =
-    typeof __ALFRED_BUILT_PREVIEW_PORT__ === 'number'
-      ? __ALFRED_BUILT_PREVIEW_PORT__
+    typeof __FOLIOHAVEN_BUILT_PREVIEW_PORT__ === 'number'
+      ? __FOLIOHAVEN_BUILT_PREVIEW_PORT__
       : 4322;
   return previewUrl(path, origin, port);
 }

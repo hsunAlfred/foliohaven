@@ -84,9 +84,9 @@ jobs.register('build', {
       });
     }
     if (mode === 'proof-crash') {
-      await safeMkdir(root, `.alfred/builds/${context.jobId}/output`);
+      await safeMkdir(root, `.foliohaven/builds/${context.jobId}/output`);
       await writeFile(
-        `${root}/.alfred/builds/${context.jobId}/output/index.html`,
+        `${root}/.foliohaven/builds/${context.jobId}/output/index.html`,
         '<!doctype html><p>proof</p>',
       );
       const proof = await artifacts.promote(context.jobId, {

@@ -1,3 +1,4 @@
+import { compatibleEnvironment } from './workspace-paths.mjs';
 import { renderSnapshot, writeBuildFailureReport } from '@foliohaven/server';
 
 const [jobId, ...extra] = process.argv.slice(2);
@@ -7,7 +8,9 @@ if (
   !/^([a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/u.test(
     jobId,
   ) ||
-  !/^([a-f0-9]{64})$/u.test(process.env['ALFRED_SNAPSHOT_REVISION'] ?? '')
+  !/^([a-f0-9]{64})$/u.test(
+    compatibleEnvironment('FOLIOHAVEN_SNAPSHOT_REVISION') ?? '',
+  )
 ) {
   process.stderr.write(
     'BUILD_WORKER_ARGUMENT_INVALID：需要單一job UUID及來源revision。\n',
@@ -24,7 +27,7 @@ if (
     await renderSnapshot({
       repositoryRoot: process.cwd(),
       jobId,
-      snapshotRevision: process.env['ALFRED_SNAPSHOT_REVISION'],
+      snapshotRevision: compatibleEnvironment('FOLIOHAVEN_SNAPSHOT_REVISION'),
       signal: controller.signal,
     });
   } catch (error) {

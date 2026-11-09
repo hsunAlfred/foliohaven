@@ -3,7 +3,7 @@ import type { BigIntStats } from 'node:fs';
 import { lstat, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { asciiCompare, UuidSchema } from '@foliohaven/core';
-import { safePath, safeRelative } from '../../files/io.js';
+import { privateResource, safePath, safeRelative } from '../../files/io.js';
 import { fileIdentityIsStable } from '../../files/revision-cache.js';
 
 export interface PreviewFingerprint {
@@ -49,7 +49,7 @@ async function scan(root: string): Promise<string> {
   }
   async function anchors(): Promise<string[]> {
     return Promise.all(
-      ['dist', '.alfred/artifacts'].map(async (resource) => {
+      ['dist', privateResource(root, 'artifacts')].map(async (resource) => {
         await safePath(root, resource);
         return (await metadata(resource, 'directory')).stamp;
       }),
@@ -96,10 +96,10 @@ async function scan(root: string): Promise<string> {
   });
   // Watch journals without traversing backup/base/prepared media or locks;
   // acquiring the artifact lease must not invalidate a validated preview.
-  await directory('.alfred/artifacts', async (names) => {
+  await directory(privateResource(root, 'artifacts'), async (names) => {
     if (!names.includes('state.json')) throw new Error('Preview state missing');
     for (const name of names) {
-      const resource = `.alfred/artifacts/${name}`;
+      const resource = privateResource(root, `artifacts/${name}`);
       if (
         name === 'state.json' ||
         /^state\.json\.[a-f0-9-]+\.tmp$/u.test(name)

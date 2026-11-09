@@ -83,8 +83,8 @@ describe('batched media collection reads', () => {
         }),
       );
       await copyFile(
-        join(root, '.alfred/media-inspections', `${seed.id}.json`),
-        join(root, '.alfred/media-inspections', `${id}.json`),
+        join(root, '.foliohaven/media-inspections', `${seed.id}.json`),
+        join(root, '.foliohaven/media-inspections', `${id}.json`),
       );
       ids.push(id);
     }
@@ -184,7 +184,7 @@ describe('batched media collection reads', () => {
     const { root, repository, add } = await fixture();
     const alpha = await add('Alpha');
     const beta = await add('Beta');
-    await rm(join(root, '.alfred/media-inspections', beta.id + '.json'));
+    await rm(join(root, '.foliohaven/media-inspections', beta.id + '.json'));
     let inReader = false;
     const original = repository.withConsistentRead.bind(repository);
     const track: typeof repository.withConsistentRead = async <T>(
@@ -228,13 +228,13 @@ describe('batched media collection reads', () => {
     expect((await service.list()).items[0]?.asset).toEqual(asset);
     const binding = JSON.parse(
       await readFile(
-        join(root, '.alfred/media-records', source.id + '.json'),
+        join(root, '.foliohaven/media-records', source.id + '.json'),
         'utf8',
       ),
     ) as { processingHash: string };
     const output = join(
       root,
-      '.alfred/media',
+      '.foliohaven/media',
       binding.processingHash,
       'image.webp',
     );
@@ -253,7 +253,7 @@ describe('batched media collection reads', () => {
     const { root, repository, add } = await fixture();
     const alpha = await add('Alpha');
     const beta = await add('Beta');
-    await rm(join(root, '.alfred/media-inspections', beta.id + '.json'));
+    await rm(join(root, '.foliohaven/media-inspections', beta.id + '.json'));
     const metaPath = join(root, 'media/source', alpha.id, 'meta.json');
     const metadata = JSON.parse(await readFile(metaPath, 'utf8')) as Record<
       string,

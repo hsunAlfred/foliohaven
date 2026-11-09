@@ -207,7 +207,7 @@ async function source(fixture: Fixture, marker: string) {
 async function fixture(): Promise<Fixture> {
   const root = await mkdtemp(join(tmpdir(), 'alfred-render-context-refresh-'));
   roots.push(root);
-  const value = { root, context: join(root, '.alfred/dev/render') };
+  const value = { root, context: join(root, '.foliohaven/dev/render') };
   for (const entry of [
     'index.astro',
     'articles/index.astro',
@@ -525,12 +525,12 @@ describe('render context refresh publication and loader consistency', () => {
         await rename(home, target);
         await symlink(target, home);
       } else if (kind === 'generation-symlink') {
-        const target = join(value.root, '.alfred/retained-generation');
+        const target = join(value.root, '.foliohaven/retained-generation');
         await rename(directory, target);
         await symlink(target, directory, 'dir');
       } else {
         const generations = join(value.context, 'generations');
-        const target = join(value.root, '.alfred/retained-generations');
+        const target = join(value.root, '.foliohaven/retained-generations');
         await rename(generations, target);
         await symlink(target, generations, 'dir');
       }

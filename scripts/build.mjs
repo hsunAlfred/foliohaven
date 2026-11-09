@@ -141,10 +141,7 @@ try {
   clearInterval(timer);
   await pollTask;
   let cleanupFailed = false;
-  for (const close of [
-    () => runtime?.jobs.close(),
-    () => runtime?.operations.close(),
-  ]) {
+  for (const close of [() => runtime?.close()]) {
     try {
       await close();
     } catch {

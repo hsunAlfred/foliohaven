@@ -1,4 +1,4 @@
-FROM node:26.12.1-trixie@sha256:a98e6fda54fdbb22d4238054cca9a2a113bcd1191c09193a535aae22f400aa8e AS toolchain
+FROM node:26.12.1-trixie@sha256:a98e6fda54fdbb22d4238054cca9a2a113bcd1191c09193a535aae22f400aa8e AS os-toolchain
 
 ENV DEVCONTAINER_DEBIAN_VERSION=13 \
     DEVCONTAINER_NODE_VERSION=26.12.1 \
@@ -12,9 +12,26 @@ RUN apt-get update \
       bash ca-certificates curl ffmpeg git openssh-client ripgrep python3 make g++ util-linux nano \
     && rm -rf /var/lib/apt/lists/* \
     && npm install --global --no-audit --no-fund "pnpm@${DEVCONTAINER_PNPM_VERSION}" \
-    && rm -rf /root/.npm \
+    && rm -rf /root/.npm
+
+FROM os-toolchain AS toolchain
+ARG LOCAL_UID=1000
+ARG LOCAL_GID=1000
+# Change identity while the image home is still small. Package stores, workspace
+# dependencies and browsers are created by their final owner in later layers.
+RUN case "$LOCAL_UID" in ''|*[!0-9]*) exit 1 ;; esac \
+    && case "$LOCAL_GID" in ''|*[!0-9]*) exit 1 ;; esac \
+    && test "$LOCAL_UID" -gt 0 && test "$LOCAL_UID" -le 2147483647 \
+    && test "$LOCAL_GID" -gt 0 && test "$LOCAL_GID" -le 2147483647 \
+    && if [ "$(id -g node)" != "$LOCAL_GID" ]; then groupmod --non-unique --gid "$LOCAL_GID" node; fi \
+    && if [ "$(id -u node)" != "$LOCAL_UID" ]; then usermod --non-unique --uid "$LOCAL_UID" node; fi \
+    && usermod --gid "$LOCAL_GID" node \
+    && chown node:node /home/node \
     && install -d -o node -g node \
       /workspaces/foliohaven \
+      /home/node/.local \
+      /home/node/.local/share \
+      /home/node/.local/share/pnpm \
       /home/node/.local/share/pnpm/store \
       /opt/playwright
 
@@ -39,7 +56,11 @@ RUN pnpm exec playwright install chromium firefox webkit
 
 FROM browser-toolchain AS dev
 COPY --chown=node:node . .
-RUN pnpm run check:compiler && pnpm run setup
+# The root editor configuration is excluded from context. Recreate only the
+# public template so the canonical verification inventory remains complete.
+RUN mkdir -p .devcontainer \
+    && cp -a release/templates/devcontainer/. .devcontainer/ \
+    && pnpm run check:compiler && pnpm run setup
 CMD ["pnpm", "dev"]
 
 FROM dev AS verify
@@ -54,29 +75,18 @@ FROM scratch AS dist-export
 COPY --from=builder /workspaces/foliohaven/dist/ /
 
 FROM browser-toolchain AS release
-ARG LOCAL_UID=1000
-ARG LOCAL_GID=1000
-ARG RELEASE_VERSION=1.0.0
-USER root
-# Align only image-owned files; the host workspace is never recursively chowned.
-RUN case "$LOCAL_UID" in ''|*[!0-9]*) exit 1 ;; esac \
-    && case "$LOCAL_GID" in ''|*[!0-9]*) exit 1 ;; esac \
-    && test "$LOCAL_UID" -gt 0 && test "$LOCAL_UID" -le 2147483647 \
-    && test "$LOCAL_GID" -gt 0 && test "$LOCAL_GID" -le 2147483647 \
-    && groupmod --non-unique --gid "$LOCAL_GID" node \
-    && usermod --non-unique --uid "$LOCAL_UID" --gid "$LOCAL_GID" node \
-    && chown -R node:node /home/node /workspaces/foliohaven /opt/playwright
-USER node
+ARG RELEASE_VERSION=1.1.0
 COPY --chown=node:node . .
-ENV ALFRED_RELEASE_VERSION=${RELEASE_VERSION}
-RUN node --input-type=module -e "import fs from 'node:fs'; if (JSON.parse(fs.readFileSync('package.json')).version !== process.env.ALFRED_RELEASE_VERSION) throw new Error('RELEASE_VERSION_MISMATCH')" \
+ENV FOLIOHAVEN_RELEASE_VERSION=${RELEASE_VERSION}
+RUN node --input-type=module -e "import fs from 'node:fs'; if (JSON.parse(fs.readFileSync('package.json')).version !== process.env.FOLIOHAVEN_RELEASE_VERSION) throw new Error('RELEASE_VERSION_MISMATCH')" \
     && pnpm run build:packages \
     && pnpm --filter @foliohaven/server build
 USER root
-# A fresh bind hides workspace dependencies; these two modules use Node only.
-RUN mkdir -p /opt/foliohaven-bootstrap/runtime /opt/foliohaven-bootstrap/files \
-    && cp server/dist/runtime/lease.js /opt/foliohaven-bootstrap/runtime/lease.js \
-    && cp server/dist/files/io.js /opt/foliohaven-bootstrap/files/io.js \
+# A fresh bind hides dependencies; preserve the builtin-only bootstrap import layout.
+RUN mkdir -p /opt/foliohaven-bootstrap/server/dist/runtime /opt/foliohaven-bootstrap/server/dist/files /opt/foliohaven-bootstrap/scripts \
+    && cp server/dist/runtime/lease.js /opt/foliohaven-bootstrap/server/dist/runtime/lease.js \
+    && cp server/dist/files/io.js /opt/foliohaven-bootstrap/server/dist/files/io.js \
+    && cp scripts/workspace-paths.mjs /opt/foliohaven-bootstrap/scripts/workspace-paths.mjs \
     && printf '%s\n' '{"type":"module"}' > /opt/foliohaven-bootstrap/package.json
 USER node
 LABEL org.opencontainers.image.version=${RELEASE_VERSION}

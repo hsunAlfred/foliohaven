@@ -26,6 +26,7 @@ import { loadContent } from '@foliohaven/core/node';
 import type { LoadContentOptions } from '@foliohaven/core/node';
 import { acquireRepositoryLock } from './lock.js';
 import {
+  privateResource,
   atomicJson,
   copyDurable,
   durableBytes,
@@ -177,7 +178,7 @@ export class FileRepository {
       )
     )
       throw new RepositoryError('INVALID_RECOVERY_ID', '復原識別不合法。', 400);
-    return `.alfred/transactions/${id}/${suffix}`;
+    return privateResource(this.#root, `transactions/${id}/${suffix}`);
   }
   async #journalPath(id: string, suffix?: string): Promise<string> {
     return safePath(this.#root, this.#transactionResource(id, suffix));
@@ -203,7 +204,10 @@ export class FileRepository {
   async #loadState(): Promise<void> {
     let value: unknown;
     try {
-      value = await readJson(this.#root, '.alfred/workspace-state.json');
+      value = await readJson(
+        this.#root,
+        privateResource(this.#root, 'workspace-state.json'),
+      );
     } catch (error) {
       if (!isMissing(error)) throw error;
       await this.#saveState();
@@ -225,11 +229,15 @@ export class FileRepository {
     this.#state = value as unknown as State;
   }
   async #saveState(): Promise<void> {
-    await atomicJson(this.#root, '.alfred/workspace-state.json', this.#state);
+    await atomicJson(
+      this.#root,
+      privateResource(this.#root, 'workspace-state.json'),
+      this.#state,
+    );
   }
   async #journals(): Promise<Journal[]> {
     const entries = await readdir(
-      await safePath(this.#root, '.alfred/transactions'),
+      await safePath(this.#root, privateResource(this.#root, 'transactions')),
       { withFileTypes: true },
     );
     const journals = await mapConcurrent(entries, async (entry) => {
@@ -312,8 +320,8 @@ export class FileRepository {
         this.#options.lockTimeoutMs ?? 10_000,
         signal,
       );
-      await safeMkdir(this.#root, '.alfred/transactions');
-      await safeMkdir(this.#root, '.alfred/staging');
+      await safeMkdir(this.#root, privateResource(this.#root, 'transactions'));
+      await safeMkdir(this.#root, privateResource(this.#root, 'staging'));
       await this.#loadState();
       for (const journal of await this.#journals())
         if (journal.status === 'prepared' || journal.status === 'installing')
@@ -753,9 +761,12 @@ export class FileRepository {
       maxBytes > CONTENT_LIMITS.videoSourceBytes
     )
       throw new RepositoryError('INVALID_BINARY_LIMIT', '媒體上限無效。', 500);
-    await safeMkdir(this.#root, '.alfred/staging');
+    await safeMkdir(this.#root, privateResource(this.#root, 'staging'));
     const id = randomUUID();
-    const path = await safePath(this.#root, `.alfred/staging/${id}.part`);
+    const path = await safePath(
+      this.#root,
+      privateResource(this.#root, `staging/${id}.part`),
+    );
     const handle = await open(
       path,
       constants.O_WRONLY |
@@ -800,7 +811,7 @@ export class FileRepository {
     await rm(
       await safePath(
         this.#root,
-        `.alfred/staging/${binary.preparedBinaryId}.part`,
+        privateResource(this.#root, `staging/${binary.preparedBinaryId}.part`),
       ),
       { force: true },
     );
@@ -971,7 +982,7 @@ export class FileRepository {
     for (const folder of ['base', 'prepared', 'displaced', 'observed', 'stage'])
       await safeMkdir(
         this.#root,
-        `.alfred/transactions/${journal.id}/${folder}`,
+        privateResource(this.#root, `transactions/${journal.id}/${folder}`),
       );
     let journalPersisted = false;
     try {
@@ -1019,7 +1030,10 @@ export class FileRepository {
               );
             const stagedPath = await safePath(
               this.#root,
-              `.alfred/staging/${staged.preparedBinaryId}.part`,
+              privateResource(
+                this.#root,
+                `staging/${staged.preparedBinaryId}.part`,
+              ),
             );
             if (
               (await hashFile(stagedPath)) !== staged.revision ||
@@ -1472,7 +1486,10 @@ export class FileRepository {
   async #purgeFiles(id: string): Promise<void> {
     for (const folder of ['base', 'prepared', 'displaced', 'observed', 'stage'])
       await rm(
-        await safePath(this.#root, `.alfred/transactions/${id}/${folder}`),
+        await safePath(
+          this.#root,
+          privateResource(this.#root, `transactions/${id}/${folder}`),
+        ),
         { recursive: true, force: true },
       );
     await syncDirectory(dirname(await this.#journalPath(id)));
@@ -1659,7 +1676,7 @@ export class FileRepository {
       const observedFiles = await readdir(
         await safePath(
           this.#root,
-          `.alfred/transactions/${journal.id}/observed`,
+          privateResource(this.#root, `transactions/${journal.id}/observed`),
         ),
       ).catch((error: unknown) => {
         if (isMissing(error)) return [];
@@ -2045,13 +2062,21 @@ export class FileRepository {
         )
           continue;
         await rm(
-          await safePath(this.#root, `.alfred/transactions/${journal.id}`),
+          await safePath(
+            this.#root,
+            privateResource(this.#root, `transactions/${journal.id}`),
+          ),
           { recursive: true },
         );
         removed.push(journal.id);
       }
       if (removed.length)
-        await syncDirectory(await safePath(this.#root, '.alfred/transactions'));
+        await syncDirectory(
+          await safePath(
+            this.#root,
+            privateResource(this.#root, 'transactions'),
+          ),
+        );
       return { removedTransactionIds: removed };
     });
   }

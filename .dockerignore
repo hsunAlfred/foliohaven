@@ -1,7 +1,9 @@
 .git
 .codex
 **/.codex
+.foliohaven
 .alfred
+**/.foliohaven
 **/.alfred
 **/test-results
 **/playwright-report

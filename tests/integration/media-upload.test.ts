@@ -136,7 +136,7 @@ describe('MEDIA-02: real HTTP multipart streams and cleanup', () => {
     expect(response.status).toBe(201);
     expect(response.body['displayName']).toBe('後面的中文名稱');
     expect((await readdir(join(root, 'media/source'))).length).toBe(1);
-    expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
   });
   it.each([
     ['two-files', [], 2, true, 413],
@@ -163,7 +163,7 @@ describe('MEDIA-02: real HTTP multipart streams and cleanup', () => {
         body(await image(), fields, count, closed),
       );
       expect(response.status).toBe(status);
-      expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+      expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
     },
   );
   it('rejects declared overall bytes excess before accepting a file', async () => {
@@ -203,7 +203,7 @@ describe('MEDIA-02: real HTTP multipart streams and cleanup', () => {
         );
       });
       expect(response).toBe(408);
-      expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+      expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
     }
   });
   it('handles client abort without orphaned partial source or encoder', async () => {
@@ -230,7 +230,7 @@ describe('MEDIA-02: real HTTP multipart streams and cleanup', () => {
     for (;;) {
       let staging: string[] = [];
       try {
-        staging = await readdir(join(root, '.alfred/staging'));
+        staging = await readdir(join(root, '.foliohaven/staging'));
       } catch {
         /* request can abort before creating its staging */
       }
@@ -238,6 +238,6 @@ describe('MEDIA-02: real HTTP multipart streams and cleanup', () => {
       if (Date.now() > deadline) throw new Error('Staging not cleaned');
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
-    expect(await readdir(join(root, '.alfred/transactions'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/transactions'))).toEqual([]);
   });
 });

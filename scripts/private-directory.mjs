@@ -8,7 +8,7 @@ import { join } from 'node:path';
  * @returns {string}
  */
 export function ensurePrivateDirectory(repositoryRoot, resource) {
-  if (!/^\.alfred(?:\/[a-zA-Z0-9_-]+)*$/.test(resource))
+  if (!/^\.(?:foliohaven|alfred)(?:\/[a-zA-Z0-9_-]+)*$/.test(resource))
     throw new Error('私有工具目錄識別無效。');
   let current = repositoryRoot;
   for (const segment of resource.split('/')) {

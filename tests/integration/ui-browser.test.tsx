@@ -1,11 +1,6 @@
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  readdir,
-  rm,
-  writeFile,
-} from 'node:fs/promises';
+import { privateResource } from '../../scripts/workspace-paths.mjs';
+import { ensurePrivateDirectory } from '../../scripts/private-directory.mjs';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, it } from 'vitest';
@@ -25,8 +20,10 @@ import { uiModels } from '../fixtures/ui-models.js';
 
 it('shared UI renders complete HTML at 375px/desktop with keyboard navigation and a browser-safe public bundle', async () => {
   const repository = fileURLToPath(new URL('../../', import.meta.url));
-  const parent = join(repository, '.alfred/environment-checks');
-  await mkdir(parent, { recursive: true });
+  const parent = ensurePrivateDirectory(
+    repository,
+    privateResource(repository, 'environment-checks'),
+  );
   const probe = await mkdtemp(join(parent, 'ui-browser-'));
   const { model } = uiModels();
   const article = model.articlePages[0];

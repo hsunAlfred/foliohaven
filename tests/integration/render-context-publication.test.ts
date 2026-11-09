@@ -91,7 +91,7 @@ async function fixture() {
     'site/src/pages/tag/index.astro': '---\n---\n<p>tags</p>',
   }))
     await writeFile(join(root, resource), value);
-  const context = join(root, '.alfred/render');
+  const context = join(root, '.foliohaven/render');
   return {
     root,
     context,

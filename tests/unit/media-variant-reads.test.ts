@@ -56,7 +56,11 @@ async function fixture(durable = false) {
     source.id,
     durable ? { jobId: randomUUID() } : {},
   );
-  const bindingPath = join(root, '.alfred/media-records', source.id + '.json');
+  const bindingPath = join(
+    root,
+    '.foliohaven/media-records',
+    source.id + '.json',
+  );
   const { processingHash } = JSON.parse(
     await readFile(bindingPath, 'utf8'),
   ) as { processingHash: string };
@@ -71,11 +75,11 @@ async function fixture(durable = false) {
     originalPath: join(root, 'media/source', source.id, 'original.png'),
     inspectionPath: join(
       root,
-      '.alfred/media-inspections',
+      '.foliohaven/media-inspections',
       source.id + '.json',
     ),
     outputPath: (variant: string) =>
-      join(root, '.alfred/media', processingHash, variant),
+      join(root, '.foliohaven/media', processingHash, variant),
   };
 }
 

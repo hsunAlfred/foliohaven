@@ -26,24 +26,61 @@ async function exists(root: string, path: string) {
 }
 
 describe('release startup gates and process lifecycle', () => {
-  it('rejects arbitrary arguments and image version mismatches before dependency or source writes', async () => {
-    const f = await fixture();
+  it.each(['FOLIOHAVEN_RELEASE_VERSION', 'ALFRED_RELEASE_VERSION'])(
+    'rejects arbitrary arguments and %s mismatches before dependency or source writes',
+    async (versionName) => {
+      const f = await fixture();
+      const output: string[] = [];
+      await expect(
+        f.execute(['--unknown'], { onOutput: (text) => output.push(text) }),
+      ).rejects.toMatchObject({ code: 'PROCESS_EXITED' });
+      expect(output.join('')).toContain('START_ARGUMENT_INVALID');
+      await expect(
+        f.execute([], {
+          env: { [versionName]: '999.0.0' },
+          onOutput: (text) => output.push(text),
+        }),
+      ).rejects.toMatchObject({ code: 'PROCESS_EXITED' });
+      expect(output.join('')).toContain('START_IMAGE_MISMATCH');
+      expect(await f.commands()).toEqual([]);
+      expect(await readFile(join(f.root, 'content/author.txt'), 'utf8')).toBe(
+        'author bytes must survive\n',
+      );
+    },
+  );
+  it.each(['999.0.0', ''])(
+    'does not fall back to a valid legacy version when the new version is %j',
+    async (newVersion) => {
+      const f = await fixture();
+      const output: string[] = [];
+      await expect(
+        f.execute([], {
+          env: {
+            FOLIOHAVEN_RELEASE_VERSION: newVersion,
+            ALFRED_RELEASE_VERSION: '0.1.0',
+          },
+          onOutput: (text) => output.push(text),
+        }),
+      ).rejects.toMatchObject({ code: 'PROCESS_EXITED' });
+      expect(output.join('')).toContain('START_IMAGE_MISMATCH');
+      expect(await f.commands()).toEqual([]);
+    },
+  );
+  it('uses the new image version instead of a conflicting legacy variable', async () => {
+    const f = await fixture({ failAt: 'install' });
     const output: string[] = [];
     await expect(
-      f.execute(['--unknown'], { onOutput: (text) => output.push(text) }),
-    ).rejects.toMatchObject({ code: 'PROCESS_EXITED' });
-    expect(output.join('')).toContain('START_ARGUMENT_INVALID');
-    await expect(
       f.execute([], {
-        env: { ALFRED_RELEASE_VERSION: '999.0.0' },
+        env: {
+          FOLIOHAVEN_RELEASE_VERSION: '0.1.0',
+          ALFRED_RELEASE_VERSION: '999.0.0',
+        },
         onOutput: (text) => output.push(text),
       }),
     ).rejects.toMatchObject({ code: 'PROCESS_EXITED' });
-    expect(output.join('')).toContain('START_IMAGE_MISMATCH');
-    expect(await f.commands()).toEqual([]);
-    expect(await readFile(join(f.root, 'content/author.txt'), 'utf8')).toBe(
-      'author bytes must survive\n',
-    );
+    expect(output.join('')).not.toContain('START_IMAGE_MISMATCH');
+    expect(output.join('')).toContain('START_DEPENDENCIES_FAILED');
+    expect(await f.commands()).not.toEqual([]);
   });
   it('a held dev-session or occupied port prevents offline installation entirely', async () => {
     const f = await fixture();

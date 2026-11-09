@@ -141,7 +141,7 @@ test('Studio衝突、未保存提醒、IDE唯讀、共用樣式與最新預覽',
       release = resolve;
     });
     await page.route('**/api/v1/previews', async (route) => {
-      editorIds.push(route.request().headers()['x-alfred-editor-id'] ?? '');
+      editorIds.push(route.request().headers()['x-foliohaven-editor-id'] ?? '');
       const index = ++requests;
       const response = await route.fetch();
       if (index === 1) await gate;

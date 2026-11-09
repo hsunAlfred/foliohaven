@@ -8,7 +8,7 @@ import {
 } from '@foliohaven/core';
 import type { MediaSource } from '@foliohaven/core';
 import type { ReadSession } from '../files/types.js';
-import { safePath, sha256 } from '../files/io.js';
+import { privateResource, safePath, sha256 } from '../files/io.js';
 import { MediaError } from './errors.js';
 import type { SourceState } from './types.js';
 import type { FileRevisionCache } from '../files/revision-cache.js';
@@ -170,7 +170,10 @@ export async function stagedEtag(
     if (key.endsWith('/meta.json'))
       hash.update(length(meta.length)).update(meta);
     else {
-      const path = await safePath(root, `.alfred/staging/${preparedId}.part`);
+      const path = await safePath(
+        root,
+        privateResource(root, `staging/${preparedId}.part`),
+      );
       const handle = await open(
         path,
         constants.O_RDONLY | constants.O_NOFOLLOW,
@@ -204,7 +207,7 @@ export async function hashOutputs(
       const actual = await streamHash(
         await safePath(
           root,
-          `.alfred/media/${processingHash}/${output.variant}`,
+          privateResource(root, `media/${processingHash}/${output.variant}`),
         ),
         cache,
       );

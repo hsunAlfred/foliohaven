@@ -181,12 +181,42 @@ function initialJournal(deploymentId: string) {
 }
 
 describe('Cloudflare 部署紀錄原子初始化', () => {
+  it('舊目錄單獨存在時沿用，但新舊並存時完全忽略舊部署證據', async () => {
+    const root = await fixture();
+    await mkdir(join(root, '.alfred'), { mode: 0o700 });
+    const oldId = randomUUID();
+    const oldJournal = initialJournal(oldId);
+    const oldDirectory = await state.deploymentRoot(root, oldId, oldJournal);
+    expect(oldDirectory).toBe(join(root, '.alfred/deployments', oldId));
+    await expect(state.rejectUnresolved(root, target)).rejects.toMatchObject({
+      code: 'CLOUDFLARE_RECOVERY_REQUIRED',
+    });
+    const oldContext = await state.loadDeployment(root, oldId, target);
+    const before = await readFile(join(oldDirectory, 'journal.json'));
+    await mkdir(join(root, '.foliohaven'), { mode: 0o700 });
+    oldContext.journal.phase = 'must-not-be-written';
+    await expect(oldContext.save()).rejects.toMatchObject({
+      code: 'PRIVATE_DIRECTORY_CHANGED',
+      unknown: true,
+    });
+    await expect(state.rejectUnresolved(root, target)).resolves.toBeUndefined();
+    await expect(
+      state.loadDeployment(root, oldId, target),
+    ).rejects.toMatchObject({ code: 'CLOUDFLARE_JOURNAL_INVALID' });
+    const newId = randomUUID();
+    expect(await state.deploymentRoot(root, newId, initialJournal(newId))).toBe(
+      join(root, '.foliohaven/deployments', newId),
+    );
+    expect(await readFile(join(oldDirectory, 'journal.json'))).toEqual(before);
+    expect(await readdir(join(root, '.alfred/deployments'))).toEqual([oldId]);
+  });
+
   it('先備妥私有journal及receipt再啟用正式目錄，內容與權限一致', async () => {
     const root = await fixture(),
       id = randomUUID(),
       journal = initialJournal(id);
     const directory = await state.deploymentRoot(root, id, journal);
-    expect(directory).toBe(join(root, '.alfred/deployments', id));
+    expect(directory).toBe(join(root, '.foliohaven/deployments', id));
     expect((await readdir(directory)).sort()).toEqual([
       'journal.json',
       'receipt.json',
@@ -199,7 +229,7 @@ describe('Cloudflare 部署紀錄原子初始化', () => {
       expect((await lstat(join(directory, name))).mode & 0o777).toBe(0o600);
     }
     await expect(
-      lstat(join(root, '.alfred/deployment-initialization', id)),
+      lstat(join(root, '.foliohaven/deployment-initialization', id)),
     ).rejects.toMatchObject({ code: 'ENOENT' });
     expect(
       (await state.loadDeployment(root, id, target)).manifestDocument,
@@ -230,9 +260,13 @@ describe('Cloudflare 部署紀錄原子初始化', () => {
         }),
       ).rejects.toBe(failure);
       await expect(
-        lstat(join(root, '.alfred/deployments', id)),
+        lstat(join(root, '.foliohaven/deployments', id)),
       ).rejects.toMatchObject({ code: 'ENOENT' });
-      const initialized = join(root, '.alfred/deployment-initialization', id);
+      const initialized = join(
+        root,
+        '.foliohaven/deployment-initialization',
+        id,
+      );
       const evidence = (await readdir(initialized)).sort();
       expect(evidence.length).toBeGreaterThan(0);
       await expect(
@@ -262,7 +296,7 @@ describe('Cloudflare 部署紀錄原子初始化', () => {
         id = randomUUID();
       const directory = await io.privateDirectory(
         root,
-        `.alfred/deployments/${id}`,
+        `.foliohaven/deployments/${id}`,
       );
       if (!empty)
         await writeFile(
@@ -289,7 +323,7 @@ describe('Cloudflare 部署紀錄原子初始化', () => {
   it('啟用前目的地被建立時保留雙方證據，不覆寫既有資料', async () => {
     const root = await fixture(),
       id = randomUUID();
-    const directory = join(root, '.alfred/deployments', id);
+    const directory = join(root, '.foliohaven/deployments', id);
     await expect(
       state.deploymentRoot(root, id, initialJournal(id), {
         fault: async (phase: string) => {
@@ -308,7 +342,7 @@ describe('Cloudflare 部署紀錄原子初始化', () => {
     );
     expect(
       (
-        await readdir(join(root, '.alfred/deployment-initialization', id))
+        await readdir(join(root, '.foliohaven/deployment-initialization', id))
       ).sort(),
     ).toEqual(['journal.json', 'receipt.json']);
   });
@@ -323,7 +357,7 @@ describe('Cloudflare 部署紀錄原子初始化', () => {
         signal: cancelled.signal,
       }),
     ).rejects.toMatchObject({ code: 'CLOUDFLARE_CANCELLED' });
-    await expect(lstat(join(root, '.alfred'))).rejects.toMatchObject({
+    await expect(lstat(join(root, '.foliohaven'))).rejects.toMatchObject({
       code: 'ENOENT',
     });
     const during = new AbortController();
@@ -336,11 +370,11 @@ describe('Cloudflare 部署紀錄原子初始化', () => {
       }),
     ).rejects.toMatchObject({ code: 'CLOUDFLARE_CANCELLED' });
     await expect(
-      lstat(join(root, '.alfred/deployments', id)),
+      lstat(join(root, '.foliohaven/deployments', id)),
     ).rejects.toMatchObject({ code: 'ENOENT' });
     expect(
       (
-        await readdir(join(root, '.alfred/deployment-initialization', id))
+        await readdir(join(root, '.foliohaven/deployment-initialization', id))
       ).sort(),
     ).toEqual(['journal.json', 'receipt.json']);
     await expect(state.rejectUnresolved(root, target)).resolves.toBeUndefined();
@@ -355,7 +389,7 @@ describe('Cloudflare 部署紀錄原子初始化', () => {
         deploymentId: randomUUID(),
       }),
     ).rejects.toMatchObject({ code: 'CLOUDFLARE_JOURNAL_INVALID' });
-    await expect(lstat(join(root, '.alfred'))).rejects.toMatchObject({
+    await expect(lstat(join(root, '.foliohaven'))).rejects.toMatchObject({
       code: 'ENOENT',
     });
     await expect(
@@ -374,7 +408,7 @@ describe('Cloudflare 部署紀錄原子初始化', () => {
       }),
     ).rejects.toMatchObject({ code: 'CLOUDFLARE_INITIALIZATION_CHANGED' });
     await expect(
-      lstat(join(root, '.alfred/deployments', id)),
+      lstat(join(root, '.foliohaven/deployments', id)),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });
@@ -410,6 +444,29 @@ function artifactFixture() {
 }
 
 describe('Cloudflare 正式產物分流與流程整合', () => {
+  it.each([
+    '.foliohaven/workspace-state.json',
+    '.alfred/workspace-state.json',
+    'assets/.foliohaven/private.json',
+    'media/.alfred/private.json',
+  ])('新舊私有路徑不進任何部署目標：%s', (path) => {
+    const { manifest } = artifactFixture();
+    expect(() =>
+      artifact.splitManifest(
+        {
+          ...manifest,
+          entries: [
+            ...manifest.entries,
+            { kind: 'file', path, byteSize: 1, sha256: hash('x') },
+          ],
+          fileCount: manifest.fileCount + 1,
+          totalBytes: manifest.totalBytes + 1,
+        },
+        target,
+      ),
+    ).toThrow(expect.objectContaining({ code: 'CLOUDFLARE_PRIVATE_ARTIFACT' }));
+  });
+
   it('部分還原與未解Worker寫入不可被status誤報uploaded或已確定failed', () => {
     const r2 = { complete: true, unknown: false, conflicts: [] };
     const journal = {
@@ -541,7 +598,7 @@ describe('Cloudflare 正式產物分流與流程整合', () => {
           events.push('capture');
           const root = join(
             repositoryRoot,
-            '.alfred/deployments',
+            '.foliohaven/deployments',
             deploymentId,
           );
           for (const [path, text] of content)
@@ -549,7 +606,7 @@ describe('Cloudflare 正式產物分流與流程整合', () => {
           return {
             proof,
             manifest,
-            resource: `.alfred/deployments/${deploymentId}/source`,
+            resource: `.foliohaven/deployments/${deploymentId}/source`,
           };
         },
       },
@@ -809,8 +866,8 @@ describe('Cloudflare 正式產物分流與流程整合', () => {
   it('未知或未完成部署阻擋後續發布，不能因重跑就覆蓋', async () => {
     const root = await fixture(),
       id = randomUUID();
-    await io.privateDirectory(root, `.alfred/deployments/${id}`);
-    await io.atomicJson(root, `.alfred/deployments/${id}/journal.json`, {
+    await io.privateDirectory(root, `.foliohaven/deployments/${id}`);
+    await io.atomicJson(root, `.foliohaven/deployments/${id}/journal.json`, {
       schemaVersion: 1,
       deploymentId: id,
       target,

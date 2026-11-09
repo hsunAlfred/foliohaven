@@ -1,3 +1,4 @@
+import { privateResource } from '../workspace-paths.mjs';
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -526,7 +527,7 @@ export async function runDomainVerification({
     const persist = async (report) => {
       const directory = await privateDirectory(
         repositoryRoot,
-        `.alfred/reports/cloudflare/${deploymentId}`,
+        privateResource(repositoryRoot, `reports/cloudflare/${deploymentId}`),
       );
       await atomicJson(directory, 'domain-verification.json', report);
       context.journal.domainVerification =

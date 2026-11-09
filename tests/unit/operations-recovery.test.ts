@@ -109,7 +109,7 @@ function response(): StoredResponse {
 function recordFile(root: string, reservation: OperationReservation) {
   return join(
     root,
-    '.alfred/operations',
+    '.foliohaven/operations',
     `${reservation.id}--${reservation.key}.json`,
   );
 }
@@ -194,7 +194,7 @@ describe('OperationStore receipt recovery without rewriting committed records', 
       status: 'replay',
       response: nextResponse,
     });
-    expect(await readdir(join(root, '.alfred/operations'))).toHaveLength(2);
+    expect(await readdir(join(root, '.foliohaven/operations'))).toHaveLength(2);
   });
 
   it('preserves the original seven-day deadline as the clock advances and prunes expired recovery records', async () => {
@@ -229,7 +229,7 @@ describe('OperationStore receipt recovery without rewriting committed records', 
       status: 404,
     });
     expect(await store.prune()).toBe(1);
-    expect(await readdir(join(root, '.alfred/operations'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/operations'))).toEqual([]);
   });
 
   it.each(['failed', 'interrupted'] as const)(
@@ -363,7 +363,7 @@ describe('OperationStore receipt recovery without rewriting committed records', 
         code: 'OPERATION_RECOVERY_REQUIRED',
         status: 409,
       });
-      expect(await readdir(join(root, '.alfred/operations'))).toEqual([
+      expect(await readdir(join(root, '.foliohaven/operations'))).toEqual([
         `${reservation.id}--${reservation.key}.json`,
       ]);
       expect(await store.reserve(request)).toEqual({

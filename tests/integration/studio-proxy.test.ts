@@ -37,10 +37,11 @@ it('Studio proxy keeps token in Node, overwrites caller headers, protects origin
     origin: string | undefined;
     host: string | undefined;
     privateHeadersAbsent: boolean;
+    legacyHeadersAbsent: boolean;
   }[] = [];
   const api = createHttpServer((req, res) => {
-    const trusted = req.headers['x-alfred-process-token'] === token;
-    const observed = req.headers['x-alfred-studio-origin'];
+    const trusted = req.headers['x-foliohaven-process-token'] === token;
+    const observed = req.headers['x-foliohaven-studio-origin'];
     observations.push({
       tokenValid: trusted,
       origin: typeof observed === 'string' ? observed : undefined,
@@ -48,6 +49,9 @@ it('Studio proxy keeps token in Node, overwrites caller headers, protects origin
       privateHeadersAbsent:
         req.headers.authorization === undefined &&
         req.headers.cookie === undefined,
+      legacyHeadersAbsent:
+        req.headers['x-alfred-process-token'] === undefined &&
+        req.headers['x-alfred-studio-origin'] === undefined,
     });
     res.statusCode =
       !trusted || (req.method !== 'GET' && req.headers.origin !== observed)
@@ -64,6 +68,13 @@ it('Studio proxy keeps token in Node, overwrites caller headers, protects origin
     proxyToken: token,
     apiOrigin: `http://127.0.0.1:${address.port}`,
   });
+  expect(Object.keys(config.define ?? {})).toEqual([
+    '__FOLIOHAVEN_SOURCE_PREVIEW_PORT__',
+    '__FOLIOHAVEN_BUILT_PREVIEW_PORT__',
+  ]);
+  const repository = fileURLToPath(new URL('../../', import.meta.url));
+  for (const directory of ['.foliohaven', '.alfred'])
+    expect(config.server?.fs?.deny).toContain(`${repository}${directory}/**`);
   expect(JSON.stringify(config)).not.toContain(token);
   const vite = await createServer({
     ...config,
@@ -86,6 +97,8 @@ it('Studio proxy keeps token in Node, overwrites caller headers, protects origin
         origin: `http://${host}`,
         'x-alfred-process-token': 'caller-cannot-supply-token',
         'x-alfred-studio-origin': 'https://attacker.invalid',
+        'x-foliohaven-process-token': 'caller-cannot-supply-current-token',
+        'x-foliohaven-studio-origin': 'https://other-attacker.invalid',
         authorization: 'synthetic-private-header',
         cookie: 'synthetic=value',
       },
@@ -97,6 +110,7 @@ it('Studio proxy keeps token in Node, overwrites caller headers, protects origin
       origin: `http://${host}`,
       host: `127.0.0.1:${address.port}`,
       privateHeadersAbsent: true,
+      legacyHeadersAbsent: true,
     });
     expect(
       (
@@ -143,7 +157,6 @@ it('Studio proxy keeps token in Node, overwrites caller headers, protects origin
         .status,
     ).toBe(403);
     expect(observations).toHaveLength(before);
-    const repository = fileURLToPath(new URL('../../', import.meta.url));
     for (const resource of [
       'content/site.json',
       'server/src/index.ts',

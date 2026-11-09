@@ -11,13 +11,22 @@
       "virtual:alfred/articles-search": ["./src/components/ArticlesSearch.tsx"]
     },
     "noEmit": true,
-    "incremental": true,
-    "tsBuildInfoFile": "../.alfred/cache/typescript/site.tsbuildinfo"
+    "incremental": true
   },
   "include": [".astro/types.d.ts", "src/**/*", "astro.config.ts"],
-  "exclude": ["node_modules", "dist", "../dist", "../.alfred"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "../dist",
+    "../.foliohaven",
+    "../.alfred"
+  ],
   "references": [
-    { "path": "../packages/core/tsconfig.json" },
-    { "path": "../packages/ui/tsconfig.json" }
+    {
+      "path": "../packages/core/tsconfig.json"
+    },
+    {
+      "path": "../packages/ui/tsconfig.json"
+    }
   ]
 }

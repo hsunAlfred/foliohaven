@@ -4,6 +4,7 @@ import { OperationSchema, SafeErrorSchema, UuidSchema } from '@foliohaven/core';
 import type { Operation, SafeError } from '@foliohaven/core';
 import type { OperationReceipt } from '../files/types.js';
 import {
+  privateResource,
   atomicJson,
   readJson,
   record,
@@ -153,7 +154,10 @@ export class OperationStore {
     return (this.#options.clock?.() ?? new Date()).getTime();
   }
   #file(reservation: OperationReservation): string {
-    return `.alfred/operations/${reservation.id}--${reservation.key}.json`;
+    return privateResource(
+      this.#root,
+      `operations/${reservation.id}--${reservation.key}.json`,
+    );
   }
   async #locked<T>(fn: () => Promise<T>): Promise<T> {
     const lease = await acquireFileLease({
@@ -168,7 +172,7 @@ export class OperationStore {
         409,
       );
     try {
-      await safeMkdir(this.#root, '.alfred/operations');
+      await safeMkdir(this.#root, privateResource(this.#root, 'operations'));
       return await fn();
     } finally {
       await lease.release();
@@ -176,7 +180,7 @@ export class OperationStore {
   }
   async #files(): Promise<readonly string[]> {
     const names = await readdir(
-      await safePath(this.#root, '.alfred/operations'),
+      await safePath(this.#root, privateResource(this.#root, 'operations')),
     );
     return names
       .filter((name) => !name.endsWith('.tmp'))
@@ -198,9 +202,15 @@ export class OperationStore {
   }
   async #read(name: string): Promise<OperationRecord> {
     const value = parseRecord(
-      await readJson(this.#root, `.alfred/operations/${name}`),
+      await readJson(
+        this.#root,
+        privateResource(this.#root, `operations/${name}`),
+      ),
     );
-    if (this.#file(value.reservation) !== `.alfred/operations/${name}`)
+    if (
+      this.#file(value.reservation) !==
+      privateResource(this.#root, `operations/${name}`)
+    )
       throw new OperationError(
         'OPERATION_RECOVERY_REQUIRED',
         '操作識別與檔名不符。',
@@ -450,12 +460,17 @@ export class OperationStore {
           );
         try {
           await rm(
-            await safePath(this.#root, `.alfred/operations/${filename}`),
+            await safePath(
+              this.#root,
+              privateResource(this.#root, `operations/${filename}`),
+            ),
           );
         } finally {
           await lease.release();
         }
-        await syncDirectory(await safePath(this.#root, '.alfred/operations'));
+        await syncDirectory(
+          await safePath(this.#root, privateResource(this.#root, 'operations')),
+        );
       }
       const id = randomUUID();
       const lease = await acquireFileLease({
@@ -643,14 +658,21 @@ export class OperationStore {
         });
         if (!lease) continue;
         try {
-          await rm(await safePath(this.#root, `.alfred/operations/${file}`));
+          await rm(
+            await safePath(
+              this.#root,
+              privateResource(this.#root, `operations/${file}`),
+            ),
+          );
           removed++;
         } finally {
           await lease.release();
         }
       }
       if (removed)
-        await syncDirectory(await safePath(this.#root, '.alfred/operations'));
+        await syncDirectory(
+          await safePath(this.#root, privateResource(this.#root, 'operations')),
+        );
       return removed;
     });
   }

@@ -1,0 +1,119 @@
+name: Prepare isolated verification
+description: Export a clean source and reuse only the pinned dependency and browser toolchain.
+inputs:
+  uid:
+    description: Non-root image UID; empty uses the runner UID.
+    default: ''
+  gid:
+    description: Image GID; empty uses the runner GID.
+    default: ''
+  target:
+    description: Application image target, dev or release.
+    default: dev
+  image:
+    description: Local image tag, never pushed to a registry.
+    default: foliohaven-check:ci
+  cache-write:
+    description: Only trusted events may update the toolchain cache.
+    default: 'false'
+outputs:
+  source:
+    description: Canonical source without Git metadata.
+    value: ${{ steps.prepare.outputs.source }}
+  image:
+    description: Loaded local application image.
+    value: ${{ steps.prepare.outputs.image }}
+  uid:
+    description: Validated UID.
+    value: ${{ steps.prepare.outputs.uid }}
+  gid:
+    description: Validated GID.
+    value: ${{ steps.prepare.outputs.gid }}
+runs:
+  using: composite
+  steps:
+    - name: Set up fixed Node.js
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .node-version
+    - name: Validate image parameters and export source
+      id: prepare
+      shell: bash
+      env:
+        IMAGE_UID: ${{ inputs.uid }}
+        IMAGE_GID: ${{ inputs.gid }}
+        IMAGE_TARGET: ${{ inputs.target }}
+        IMAGE_TAG: ${{ inputs.image }}
+        CACHE_WRITE: ${{ inputs.cache-write }}
+      run: |
+        set -euo pipefail
+        export IMAGE_UID="${IMAGE_UID:-$(id -u)}"
+        export IMAGE_GID="${IMAGE_GID:-$(id -g)}"
+        python3 - <<'PY'
+        import os, re
+        for name in ('IMAGE_UID', 'IMAGE_GID'):
+            value = os.environ[name]
+            assert re.fullmatch(r'[1-9][0-9]*', value) and int(value) <= 2147483647, 'invalid non-root identity'
+        assert os.environ['IMAGE_TARGET'] in ('dev', 'release'), 'invalid image target'
+        assert re.fullmatch(r'foliohaven-[a-z0-9][a-z0-9_.-]*:ci', os.environ['IMAGE_TAG']), 'invalid local image tag'
+        assert os.environ['CACHE_WRITE'] in ('true', 'false'), 'invalid cache policy'
+        PY
+        verification_source="$RUNNER_TEMP/foliohaven-ci-source"
+        node scripts/package-release.mjs --source "$GITHUB_WORKSPACE" --directory "$verification_source"
+        verification_version="$(node --input-type=module -e 'import fs from "node:fs"; process.stdout.write(JSON.parse(fs.readFileSync(process.argv[1])).version)' "$verification_source/package.json")"
+        {
+          printf 'source=%s\n' "$verification_source"
+          printf 'image=%s\n' "$IMAGE_TAG"
+          printf 'target=%s\n' "$IMAGE_TARGET"
+          printf 'uid=%s\n' "$IMAGE_UID"
+          printf 'gid=%s\n' "$IMAGE_GID"
+          printf 'version=%s\n' "$verification_version"
+          printf 'cache-scope=foliohaven-linux-amd64-uid%s-gid%s\n' "$IMAGE_UID" "$IMAGE_GID"
+        } >> "$GITHUB_OUTPUT"
+    - name: Set up fixed Buildx and BuildKit
+      id: buildx
+      uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      with:
+        version: v0.38.2
+        install: true
+        driver-opts: |
+          image=moby/buildkit:v0.34.2@sha256:c5f8862f52499773af85bc07695b2379ef08e8002352b0df2c4864c91d78dabe
+          default-load=true
+        buildkitd-config-inline: |
+          [worker.oci]
+            max-parallelism = 2
+    - name: Reuse the dependency and browser toolchain
+      uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+      with:
+        builder: ${{ steps.buildx.outputs.name }}
+        context: ${{ steps.prepare.outputs.source }}
+        target: browser-toolchain
+        load: true
+        push: false
+        tags: foliohaven-toolchain:ci
+        build-args: |
+          LOCAL_UID=${{ steps.prepare.outputs.uid }}
+          LOCAL_GID=${{ steps.prepare.outputs.gid }}
+        cache-from: type=gha,scope=${{ steps.prepare.outputs.cache-scope }}
+        cache-to: ${{ inputs.cache-write == 'true' && github.event_name != 'pull_request' && format('type=gha,mode=min,scope={0}', steps.prepare.outputs.cache-scope) || '' }}
+        provenance: false
+        sbom: false
+    - name: Build the current source without caching author data
+      shell: bash
+      env:
+        VERIFICATION_SOURCE: ${{ steps.prepare.outputs.source }}
+        VERIFICATION_IMAGE: ${{ steps.prepare.outputs.image }}
+        VERIFICATION_TARGET: ${{ steps.prepare.outputs.target }}
+        VERIFICATION_UID: ${{ steps.prepare.outputs.uid }}
+        VERIFICATION_GID: ${{ steps.prepare.outputs.gid }}
+        VERIFICATION_VERSION: ${{ steps.prepare.outputs.version }}
+        VERIFICATION_BUILDER: ${{ steps.buildx.outputs.name }}
+      run: |
+        set -euo pipefail
+        printf 'BUILDX_BUILDER=%s\n' "$VERIFICATION_BUILDER" >> "$GITHUB_ENV"
+        docker buildx build --builder "$VERIFICATION_BUILDER" --load \
+          --target "$VERIFICATION_TARGET" --tag "$VERIFICATION_IMAGE" \
+          --build-arg "LOCAL_UID=$VERIFICATION_UID" \
+          --build-arg "LOCAL_GID=$VERIFICATION_GID" \
+          --build-arg "RELEASE_VERSION=$VERIFICATION_VERSION" \
+          "$VERIFICATION_SOURCE"

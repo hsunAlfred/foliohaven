@@ -15,6 +15,7 @@ import {
   type PublicArticleViewModel,
   type JsonValue,
 } from '@foliohaven/core';
+import { compatibleEnvironment } from '../../../../scripts/workspace-paths.mjs';
 import type { RenderContextIndex } from '../../fixed-pages.js';
 
 const fileSchema = z
@@ -69,7 +70,7 @@ const indexSchema = z.strictObject({
 });
 
 function contextDirectory(): string {
-  const directory = process.env['ALFRED_RENDER_CONTEXT'];
+  const directory = compatibleEnvironment('FOLIOHAVEN_RENDER_CONTEXT');
   if (directory === undefined || !isAbsolute(directory))
     throw new Error(
       'RENDER_CONTEXT_REQUIRED：請使用專案的建置或開發入口產生私有呈現資料。',

@@ -1,3 +1,7 @@
+import {
+  privateDirectoryName,
+  compatibleEnvironment,
+} from './workspace-paths.mjs';
 import { constants } from 'node:fs';
 import { access, lstat, readFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
@@ -123,7 +127,7 @@ async function workspace() {
   ])
     await directory(path);
   for (const path of [
-    '.alfred',
+    privateDirectoryName(root),
     'media/source',
     'dist',
     'node_modules',
@@ -157,8 +161,8 @@ async function workspace() {
     await readFile(resolve(root, 'package.json'), 'utf8'),
   ).version;
   if (
-    process.env.ALFRED_RELEASE_VERSION !== undefined &&
-    version !== process.env.ALFRED_RELEASE_VERSION
+    compatibleEnvironment('FOLIOHAVEN_RELEASE_VERSION') !== undefined &&
+    version !== compatibleEnvironment('FOLIOHAVEN_RELEASE_VERSION')
   )
     throw new StartError(
       'START_IMAGE_MISMATCH',
@@ -185,7 +189,7 @@ async function freePort(port, host) {
 }
 async function bootstrap() {
   for (const entry of [
-    '/opt/foliohaven-bootstrap/runtime/lease.js',
+    '/opt/foliohaven-bootstrap/server/dist/runtime/lease.js',
     resolve(root, 'server/dist/runtime/lease.js'),
   ]) {
     try {

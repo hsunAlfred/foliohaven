@@ -4,6 +4,7 @@ import { dirname, relative, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { asciiCompare } from '@foliohaven/core';
 import {
+  isBuildSnapshotResource,
   isMissing,
   RepositoryError,
   safePath,
@@ -47,6 +48,7 @@ const requiredFiles = new Set<string>([
 const excludedDirectories = new Set([
   'node_modules',
   'dist',
+  '.foliohaven',
   '.alfred',
   '.git',
   '.astro',
@@ -283,11 +285,7 @@ export async function copyBuildSnapshot(
   const root = resolve(repositoryRoot);
   const snapshot = resolve(destination);
   const snapshotKey = relative(root, snapshot);
-  if (
-    !/^\.alfred\/builds\/[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\/snapshot$/.test(
-      snapshotKey,
-    )
-  )
+  if (!isBuildSnapshotResource(root, snapshotKey))
     throw new BuildInputError(
       'INVALID_SNAPSHOT_DESTINATION',
       '快照只能寫入本工作區的私有建置目錄。',

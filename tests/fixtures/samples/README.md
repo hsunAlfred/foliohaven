@@ -8,7 +8,7 @@
 內部 `sourceRoot` 參數僅用於測試隔離與回歸，不是正式 CLI 的來源設定。測試以六篇與替換後兩篇的作者副本驗證：固定資料仍相同，作者資料保持原樣。
 Schema 或程式介面正式變更時，應同步維護這組 fixture；單純編輯文章與網站資料不需要修改測試。
 
-在專案根目錄執行完整驗收：
+在專案根目錄執行這組範例流程測試：
 
 ```bash
 pnpm exec vitest run --project integration tests/integration/samples.test.ts

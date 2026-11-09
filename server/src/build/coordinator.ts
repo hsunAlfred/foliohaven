@@ -10,6 +10,7 @@ import {
 } from '@foliohaven/core';
 import type { FileRepository } from '../files/index.js';
 import {
+  privateResource,
   atomicJson,
   readOptional,
   record,
@@ -65,7 +66,10 @@ async function workerFailure(
 ): Promise<BuildWorkerFailure | null> {
   try {
     const bytes = await readOptional(
-      await safePath(snapshotRoot, '.alfred/build-failure.json'),
+      await safePath(
+        snapshotRoot,
+        privateResource(snapshotRoot, 'build-failure.json'),
+      ),
       2 * 1024 * 1024,
     );
     if (bytes === null) return null;
@@ -90,7 +94,7 @@ async function report(
   revision: string,
 ): Promise<BuildResult> {
   const handle = await open(
-    await safePath(snapshot, '.alfred/build-result.json'),
+    await safePath(snapshot, privateResource(snapshot, 'build-result.json')),
     constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
   );
   try {
@@ -180,7 +184,7 @@ export class BuildCoordinator implements JobHandler<'build'> {
         args: ['scripts/build-worker.mjs', options.jobId],
         cwd: options.snapshotRoot,
         env: buildProcessEnvironment({
-          ALFRED_SNAPSHOT_REVISION: options.snapshotRevision,
+          FOLIOHAVEN_SNAPSHOT_REVISION: options.snapshotRevision,
         }),
         signal: options.signal,
         timeoutMs: 10_800_000,
@@ -220,7 +224,7 @@ export class BuildCoordinator implements JobHandler<'build'> {
           timedOut ? '建置超過整體時間限制。' : '建置已取消。',
         );
     };
-    const directory = `.alfred/builds/${context.jobId}`;
+    const directory = privateResource(this.#root, `builds/${context.jobId}`);
     const snapshotKey = `${directory}/snapshot`;
     let ownsDirectory = false;
     const progress = async (
@@ -240,7 +244,7 @@ export class BuildCoordinator implements JobHandler<'build'> {
       checkpoint();
       if ((await this.#options.artifacts.recover()).recoveryState !== 'ready')
         throw failure('BUILD_RECOVERY_REQUIRED', '請先完成產物復原。');
-      await safeMkdir(this.#root, '.alfred/builds');
+      await safeMkdir(this.#root, privateResource(this.#root, 'builds'));
       try {
         await lstat(await safePath(this.#root, directory));
         throw failure(

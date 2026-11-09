@@ -84,6 +84,10 @@ export async function releaseStartFixture(initial: StartCase = {}) {
       join(repository, 'scripts/managed-process.mjs'),
       join(root, 'scripts/managed-process.mjs'),
     );
+    await cp(
+      join(repository, 'scripts/workspace-paths.mjs'),
+      join(root, 'scripts/workspace-paths.mjs'),
+    );
     await writeFile(join(root, 'fixture.json'), JSON.stringify(initial));
     await writeFile(
       join(root, '.bin/pnpm'),

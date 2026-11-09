@@ -31,6 +31,7 @@ export default defineConfig(
     '**/.vite/**',
     '**/.wrangler/**',
     '**/coverage/**',
+    '.foliohaven/**',
     '.alfred/**',
     'media/**',
     'content/**',

@@ -50,7 +50,7 @@ it('cleans previous render generations only after acquiring the dev lease and pr
       expect(source).toContain('4321');
       await writeFile(path, source.replaceAll('4321', String(port)));
     }
-    const context = join(fixture.root, '.alfred/dev/render');
+    const context = join(fixture.root, '.foliohaven/dev/render');
     const oldGeneration = randomUUID();
     const oldDirectory = join(context, 'generations', oldGeneration);
     await mkdir(oldDirectory, { recursive: true, mode: 0o700 });

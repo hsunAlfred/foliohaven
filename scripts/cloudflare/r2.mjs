@@ -149,35 +149,61 @@ function snapshot(response, sha256 = null) {
   result.fingerprint = fingerprint({ etag, byteSize, metadata, headers });
   return result;
 }
+function managedMetadata(remote) {
+  if (!remote) return null;
+  const groups = [];
+  for (const prefix of ['foliohaven', 'alfred']) {
+    const keys = ['sha256', 'byte-size', 'deployment-id'].map(
+      (suffix) => `${prefix}-${suffix}`,
+    );
+    if (!keys.some((key) => Object.hasOwn(remote.metadata, key))) continue;
+    const sha256 = remote.metadata[`${prefix}-sha256`];
+    const byteSize = remote.metadata[`${prefix}-byte-size`];
+    const deploymentId = remote.metadata[`${prefix}-deployment-id`];
+    if (
+      !SHA.test(sha256 ?? '') ||
+      byteSize !== String(remote.byteSize) ||
+      !UUID.test(deploymentId ?? '')
+    )
+      throw fail(
+        'R2_METADATA_INVALID',
+        'R2 管理標記缺漏或無效，請保留部署紀錄並檢查物件 metadata。',
+      );
+    groups.push({ sha256, byteSize, deploymentId });
+  }
+  if (!groups.length) return null;
+  if (groups.length === 2 && stable(groups[0]) !== stable(groups[1]))
+    throw fail(
+      'R2_METADATA_CONFLICT',
+      'R2 新舊管理標記不一致，未繼續上傳或還原。',
+    );
+  return { ...groups[0], fieldCount: groups.length * 3 };
+}
 function managedSha(remote) {
-  return remote &&
-    SHA.test(remote.metadata['alfred-sha256'] ?? '') &&
-    remote.metadata['alfred-byte-size'] === String(remote.byteSize) &&
-    UUID.test(remote.metadata['alfred-deployment-id'] ?? '')
-    ? remote.metadata['alfred-sha256']
-    : null;
+  return managedMetadata(remote)?.sha256 ?? null;
 }
 function desired(record, deploymentId) {
   return {
     ContentType: record.mime,
     CacheControl: CACHE,
     Metadata: {
-      'alfred-sha256': record.sha256,
-      'alfred-byte-size': String(record.byteSize),
-      'alfred-deployment-id': deploymentId,
+      'foliohaven-sha256': record.sha256,
+      'foliohaven-byte-size': String(record.byteSize),
+      'foliohaven-deployment-id': deploymentId,
     },
   };
 }
 function desiredMatches(remote, record, deploymentId, allowPrevious = false) {
+  const metadata = managedMetadata(remote);
   return (
     remote?.byteSize === record.byteSize &&
     remote.sha256 === record.sha256 &&
-    managedSha(remote) === record.sha256 &&
+    metadata?.sha256 === record.sha256 &&
     remote.headers.ContentType === record.mime &&
     remote.headers.CacheControl === CACHE &&
     Object.keys(remote.headers).length === 2 &&
-    Object.keys(remote.metadata).length === 3 &&
-    (allowPrevious || remote.metadata['alfred-deployment-id'] === deploymentId)
+    Object.keys(remote.metadata).length === metadata?.fieldCount &&
+    (allowPrevious || metadata?.deploymentId === deploymentId)
   );
 }
 function sameRemote(a, b) {

@@ -81,7 +81,7 @@ async function fixture({
   );
   roots.push(repositoryRoot);
   const deploymentId = randomUUID();
-  const root = join(repositoryRoot, '.alfred/deployments', deploymentId);
+  const root = join(repositoryRoot, '.foliohaven/deployments', deploymentId);
   const files = new Map<string, Buffer>([
     [
       'index.html',
@@ -570,8 +570,16 @@ describe('Cloudflare domain validation and safe networking', () => {
       ),
     ).toBe(true);
     expect(
-      report.checks.filter((check) => check.code === 'missing-and-private'),
-    ).toHaveLength(4);
+      report.checks
+        .filter((check) => check.code === 'missing-and-private')
+        .map((check) => check.path),
+    ).toEqual([
+      `/__foliohaven-missing-${f.context.deploymentId}/`,
+      `/assets/__foliohaven-missing-${f.context.deploymentId}`,
+      '/.foliohaven/',
+      '/.alfred/',
+      '/content/site.json',
+    ]);
   });
 
   it('keeps an injected fake transport offline instead of enabling native video connections', async () => {
@@ -613,7 +621,7 @@ describe('Cloudflare domain validation and safe networking', () => {
     const fallback = report.checks.find(
       (check) =>
         check.code === 'file' &&
-        check.path === `/__alfred_not_found_${f.context.deploymentId}/`,
+        check.path === `/__foliohaven_not_found_${f.context.deploymentId}/`,
     );
     const source = f.files.get('404.html');
     if (!source) throw new Error('Fixture 404 missing');
@@ -677,7 +685,7 @@ describe('Cloudflare domain validation and safe networking', () => {
         report.checks.find(
           (check) =>
             check.code === 'file' &&
-            check.path === `/__alfred_not_found_${f.context.deploymentId}/`,
+            check.path === `/__foliohaven_not_found_${f.context.deploymentId}/`,
         ),
       ).toMatchObject({ status: 'failed', errorCode });
     },
@@ -689,7 +697,7 @@ describe('Cloudflare domain validation and safe networking', () => {
       const f = await fixture();
       const path =
         route === 'missing-page'
-          ? `/__alfred_not_found_${f.context.deploymentId}/`
+          ? `/__foliohaven_not_found_${f.context.deploymentId}/`
           : route;
       await replaceFixtureFile(
         f,
@@ -739,7 +747,7 @@ describe('Cloudflare domain validation and safe networking', () => {
 
   it('does not accept a generic 404 body instead of the deployed custom 404 artifact', async () => {
     const f = await fixture();
-    const path = `/__alfred_not_found_${f.context.deploymentId}/`;
+    const path = `/__foliohaven_not_found_${f.context.deploymentId}/`;
     const report = await createDomainVerifier({
       lookup: f.lookup,
       request: async (url, options) => {
@@ -762,7 +770,7 @@ describe('Cloudflare domain validation and safe networking', () => {
 
   it('chooses a missing namespace that cannot collide with any manifest file or directory', async () => {
     const f = await fixture();
-    const prefix = `__alfred_not_found_${f.context.deploymentId}`;
+    const prefix = `__foliohaven_not_found_${f.context.deploymentId}`;
     await addFixtureFile(
       f,
       `${prefix}/index.html`,
@@ -1326,7 +1334,7 @@ describe('Cloudflare domain validation and safe networking', () => {
           await readFile(
             join(
               f.context.repositoryRoot,
-              '.alfred/reports/cloudflare',
+              '.foliohaven/reports/cloudflare',
               f.context.deploymentId,
               'screenshots',
               `${name}-home.png`,
@@ -1365,7 +1373,7 @@ describe('Cloudflare domain validation and safe networking', () => {
     expect(searches.every((call) => call.options.method === 'GET')).toBe(true);
     for (const query of [
       normalizeSearchQuery(articleTitle),
-      normalizeSearchQuery(`__alfred_no_result_${f.context.deploymentId}`),
+      normalizeSearchQuery(`__foliohaven_no_result_${f.context.deploymentId}`),
     ])
       expect(
         searches.filter(

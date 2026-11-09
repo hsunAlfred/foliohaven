@@ -7,13 +7,16 @@
     "types": ["vite/client", "react", "react-dom"],
     "jsx": "react-jsx",
     "noEmit": true,
-    "incremental": true,
-    "tsBuildInfoFile": "../.alfred/cache/typescript/studio.tsbuildinfo"
+    "incremental": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist"],
   "references": [
-    { "path": "../packages/core/tsconfig.json" },
-    { "path": "../packages/ui/tsconfig.json" }
+    {
+      "path": "../packages/core/tsconfig.json"
+    },
+    {
+      "path": "../packages/ui/tsconfig.json"
+    }
   ]
 }

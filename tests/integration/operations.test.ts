@@ -145,10 +145,10 @@ describe('JOB-01：OperationStore冪等reservation、原始回應與重啟', () 
         payload: { title: 'a' },
       }),
     );
-    const names = await readdir(join(root, '.alfred/operations'));
+    const names = await readdir(join(root, '.foliohaven/operations'));
     const record = JSON.parse(
       await readFile(
-        join(root, '.alfred/operations', required(names[0])),
+        join(root, '.foliohaven/operations', required(names[0])),
         'utf8',
       ),
     ) as { summary: { status: string } };
@@ -310,7 +310,9 @@ describe('JOB-01：OperationStore冪等reservation、原始回應與重啟', () 
     await expect(restarted.get(reservation.id)).rejects.toMatchObject({
       status: 404,
     });
-    expect(await readdir(join(root, '.alfred/transactions'))).toHaveLength(1);
+    expect(await readdir(join(root, '.foliohaven/transactions'))).toHaveLength(
+      1,
+    );
     const fresh = reserved(
       await restarted.reserve({ key, kind: 'article-create', payload: {} }),
     );
@@ -326,7 +328,7 @@ describe('JOB-01：OperationStore冪等reservation、原始回應與重啟', () 
       response: { id: 'legacy' },
     };
     await store.initialize([receipt]);
-    expect(await readdir(join(root, '.alfred/operations'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/operations'))).toEqual([]);
   });
 });
 

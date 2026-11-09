@@ -1,12 +1,7 @@
+import { privateResource } from '../../scripts/workspace-paths.mjs';
+import { ensurePrivateDirectory } from '../../scripts/private-directory.mjs';
 import { expect, it } from 'vitest';
-import {
-  mkdtemp,
-  mkdir,
-  readFile,
-  readdir,
-  rm,
-  writeFile,
-} from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
@@ -14,8 +9,10 @@ import { chromium } from '@playwright/test';
 
 it('Core公開入口實際打包並在瀏覽器執行，沒有Node或native依賴', async () => {
   const repository = fileURLToPath(new URL('../../', import.meta.url));
-  const parent = join(repository, '.alfred/environment-checks');
-  await mkdir(parent, { recursive: true });
+  const parent = ensurePrivateDirectory(
+    repository,
+    privateResource(repository, 'environment-checks'),
+  );
   const probe = await mkdtemp(join(parent, 'core-browser-'));
   let browser;
   try {

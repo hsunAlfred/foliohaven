@@ -174,8 +174,7 @@ describe('API-01：衍生表示strong ETag與內部raw CAS', () => {
         ),
       ).toEqual(bytes);
     } finally {
-      await runtime.jobs.close();
-      await runtime.operations.close();
+      await runtime.close();
     }
   });
   it('HTTP Media201/GET bytes一致，完成後etag變動而同key仍重送原始201', async () => {
@@ -319,7 +318,7 @@ describe('API-01：衍生表示strong ETag與內部raw CAS', () => {
       }),
     );
     await rm(
-      join(root, '.alfred/media-inspections', `${source.value.id}.json`),
+      join(root, '.foliohaven/media-inspections', `${source.value.id}.json`),
     );
     const first = await acquireMediaSlot(root, 'image', 10_000);
     const second = await acquireMediaSlot(root, 'image', 10_000);
@@ -343,8 +342,7 @@ describe('API-01：衍生表示strong ETag與內部raw CAS', () => {
       await second.release();
       await reading;
       await writer;
-      await runtime.jobs.close();
-      await runtime.operations.close();
+      await runtime.close();
     }
   });
   it('article create在committed後被IDE修改仍回當次保存DTO/ETag與原201 receipt', async () => {
@@ -458,7 +456,7 @@ describe('API-01：衍生表示strong ETag與內部raw CAS', () => {
   it('inspection disk cache不可寫時仍用當次受版本約束的檢查結果回GET與保存snapshot', async () => {
     await running.service.close();
     const runtime = await createLocalRuntime({ repositoryRoot: root });
-    const directory = join(root, '.alfred/media-inspections');
+    const directory = join(root, '.foliohaven/media-inspections');
     try {
       const bytes = await sharp({
         create: {
@@ -490,8 +488,7 @@ describe('API-01：衍生表示strong ETag與內部raw CAS', () => {
       expect((await runtime.media.get(source.value.id)).etag).toBe(saved.etag);
     } finally {
       await chmod(directory, 0o700);
-      await runtime.jobs.close();
-      await runtime.operations.close();
+      await runtime.close();
     }
   });
 });

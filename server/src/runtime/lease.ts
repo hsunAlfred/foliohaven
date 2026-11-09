@@ -2,7 +2,13 @@ import { spawn } from 'node:child_process';
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { RepositoryError, safeMkdir, safePath } from '../files/io.js';
+import {
+  pinPrivateDirectory,
+  privateResource,
+  RepositoryError,
+  safeMkdir,
+  safePath,
+} from '../files/io.js';
 
 export interface FileLeaseOptions {
   readonly root: string;
@@ -36,18 +42,21 @@ export async function acquireFileLease(
   if (options.signal?.aborted)
     throw new RepositoryError('OPERATION_CANCELLED', '操作已取消。');
 
-  await safeMkdir(options.root, '.alfred/locks');
-  const path = await safePath(
-    options.root,
-    `.alfred/locks/${options.name}.lock`,
-  );
-  const handle = await open(
-    path,
-    constants.O_CREAT | constants.O_RDWR | constants.O_NOFOLLOW,
-    0o600,
-  );
+  const unpinDirectory = pinPrivateDirectory(options.root);
+  let opened: Awaited<ReturnType<typeof open>> | undefined;
   let transferred = false;
   try {
+    await safeMkdir(options.root, privateResource(options.root, 'locks'));
+    const path = await safePath(
+      options.root,
+      privateResource(options.root, `locks/${options.name}.lock`),
+    );
+    const handle = await open(
+      path,
+      constants.O_CREAT | constants.O_RDWR | constants.O_NOFOLLOW,
+      0o600,
+    );
+    opened = handle;
     const stat = await handle.stat();
     if (!stat.isFile() || (stat.mode & 0o077) !== 0)
       throw new RepositoryError(
@@ -104,6 +113,8 @@ export async function acquireFileLease(
         503,
       );
 
+    // Waiting for another process must not allow a root switch before ownership.
+    privateResource(options.root);
     await handle.truncate(0);
     await handle.writeFile(
       `${JSON.stringify({
@@ -121,10 +132,20 @@ export async function acquireFileLease(
       release: async () => {
         if (released) return;
         released = true;
-        await handle.close();
+        try {
+          await handle.close();
+        } finally {
+          unpinDirectory();
+        }
       },
     };
   } finally {
-    if (!transferred) await handle.close();
+    if (!transferred) {
+      try {
+        await opened?.close();
+      } finally {
+        unpinDirectory();
+      }
+    }
   }
 }

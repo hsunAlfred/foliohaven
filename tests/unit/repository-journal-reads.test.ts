@@ -51,7 +51,7 @@ async function fixture() {
   const repository = new FileRepository({ repositoryRoot: root });
   await repository.initialize();
   const add = async (value: Journal) => {
-    const directory = join(root, '.alfred/transactions', value.id);
+    const directory = join(root, '.foliohaven/transactions', value.id);
     await mkdir(directory, { mode: 0o700 });
     const path = join(directory, 'journal.json');
     await writeFile(path, JSON.stringify(value));
@@ -64,7 +64,7 @@ describe('parallel transaction journal reads', () => {
   it('keeps both preflight scans and skips directories without a journal', async () => {
     const { root, repository, add } = await fixture();
     const paths = await Promise.all([add(journal(1)), add(journal(2))]);
-    const missing = join(root, '.alfred/transactions', id(3));
+    const missing = join(root, '.foliohaven/transactions', id(3));
     await mkdir(missing, { mode: 0o700 });
     const read = vi.spyOn(io, 'readJson');
     await expect(
@@ -120,7 +120,7 @@ describe('parallel transaction journal reads', () => {
     const path = await add(value);
     if (target === 'malformed JSON') await writeFile(path, '{');
     if (target === 'directory ID mismatch') {
-      const directory = join(root, '.alfred/transactions', id(1));
+      const directory = join(root, '.foliohaven/transactions', id(1));
       await mkdir(directory, { mode: 0o700 });
       await writeFile(join(directory, 'journal.json'), JSON.stringify(value));
     }
@@ -132,8 +132,8 @@ describe('parallel transaction journal reads', () => {
     }
     if (target === 'directory symlink')
       await symlink(
-        join(root, '.alfred/transactions', value.id),
-        join(root, '.alfred/transactions', id(2)),
+        join(root, '.foliohaven/transactions', value.id),
+        join(root, '.foliohaven/transactions', id(2)),
       );
     await expect(
       repository.withConsistentRead(async () => undefined),

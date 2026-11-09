@@ -48,7 +48,7 @@ async function fixture() {
 }
 async function prepare(root: string, letter: string, bytes = letter) {
   const jobId = randomUUID();
-  const output = join(root, '.alfred/builds', jobId, 'output');
+  const output = join(root, '.foliohaven/builds', jobId, 'output');
   for (const path of ['', 'assets', 'media/example', 'empty'])
     await mkdir(join(output, path), { recursive: true, mode: 0o700 });
   for (const [path, value] of Object.entries({
@@ -92,7 +92,7 @@ describe('Cloudflare deployment artifact capture', () => {
     const options = expected(proof);
     const captured = await store.captureCurrent(options);
     expect(captured.resource).toBe(
-      `.alfred/deployments/${options.deploymentId}/source`,
+      `.foliohaven/deployments/${options.deploymentId}/source`,
     );
     expect(captured.proof).toEqual(proof);
     expect(captured.manifest).toEqual(proof.manifest);
@@ -183,7 +183,7 @@ describe('Cloudflare deployment artifact capture', () => {
         code: 'ARTIFACT_CAPTURE_ARGUMENT_INVALID',
       });
     await expect(
-      lstat(join(root, '.alfred/deployments')),
+      lstat(join(root, '.foliohaven/deployments')),
     ).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
@@ -206,7 +206,7 @@ describe('Cloudflare deployment artifact capture', () => {
     const proof = await build(root, store, 'a');
     const outside = join(root, 'outside');
     await mkdir(outside);
-    await symlink(outside, join(root, '.alfred/deployments'));
+    await symlink(outside, join(root, '.foliohaven/deployments'));
     const options = expected(proof);
     await expect(store.captureCurrent(options)).rejects.toMatchObject({
       code: 'RESOURCE_SYMLINK',
@@ -262,7 +262,7 @@ describe('Cloudflare deployment artifact capture', () => {
       store.captureCurrent({ ...beforeOptions, signal: before.signal }),
     ).rejects.toMatchObject({ code: 'BUILD_CANCELLED' });
     await expect(
-      lstat(join(root, '.alfred/deployments', beforeOptions.deploymentId)),
+      lstat(join(root, '.foliohaven/deployments', beforeOptions.deploymentId)),
     ).rejects.toMatchObject({ code: 'ENOENT' });
     const during = new AbortController();
     copying.source = join(root, 'dist/index.html');

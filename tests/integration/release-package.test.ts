@@ -66,6 +66,7 @@ async function fixture() {
     'docs/deployment/Cloudflare部署.md',
     'scripts/deploy-cloudflare.mjs',
     'scripts/release-source.mjs',
+    'scripts/workspace-paths.mjs',
     'scripts/package-release.mjs',
     'release/manifest.json',
   ])
@@ -85,7 +86,11 @@ async function fixture() {
     'package.json',
     '{"name":"foliohaven","version":"0.1.0"}\n',
   );
-  await put(source, '.gitignore', '.alfred/\n.env\nnode_modules/\n');
+  await put(
+    source,
+    '.gitignore',
+    '.foliohaven/\n.alfred/\n.env\nnode_modules/\n',
+  );
   await copyFile(
     join(repository, '.gitattributes'),
     join(source, '.gitattributes'),
@@ -125,6 +130,7 @@ async function fixture() {
   );
   await put(source, 'docs/development/producer.md', 'private producer notes\n');
   await put(source, '.alfred/conversation.json', '{"private":true}\n');
+  await put(source, '.foliohaven/conversation.json', '{"private":true}\n');
   await put(
     source,
     '.github/workflows/publish-release.yml',
@@ -204,6 +210,88 @@ async function git(source: string, args: string[]) {
 }
 
 describe('public release packaging', () => {
+  it.each([
+    { label: 'legacy only', roots: ['.alfred'], refused: '.foliohaven' },
+    { label: 'both', roots: ['.foliohaven', '.alfred'], refused: '.alfred' },
+    { label: 'neither', roots: [], refused: '.alfred' },
+  ])(
+    'refuses an unselected private output root for $label without creating or modifying either root',
+    async ({ roots, refused }) => {
+      const { source } = await fixture();
+      for (const name of ['.foliohaven', '.alfred'])
+        await rm(join(source, name), { recursive: true, force: true });
+      for (const name of roots) {
+        await mkdir(join(source, name), { mode: 0o700 });
+        await writeFile(
+          join(source, name, 'sentinel'),
+          `${name}: unchanged\n`,
+          { mode: 0o600 },
+        );
+      }
+      await expect(
+        run(source, '--directory', join(source, refused, 'releases/candidate')),
+      ).rejects.toMatchObject({
+        code: 1,
+        stderr: expect.stringContaining('RELEASE_DESTINATION_INVALID'),
+      });
+      for (const name of ['.foliohaven', '.alfred']) {
+        if (roots.includes(name)) {
+          expect(await readdir(join(source, name))).toEqual(['sentinel']);
+          expect(await readFile(join(source, name, 'sentinel'), 'utf8')).toBe(
+            `${name}: unchanged\n`,
+          );
+          expect((await lstat(join(source, name))).mode & 0o777).toBe(0o700);
+        } else
+          await expect(lstat(join(source, name))).rejects.toMatchObject({
+            code: 'ENOENT',
+          });
+      }
+    },
+  );
+
+  it.each([
+    { label: 'legacy only', roots: ['.alfred'], selected: '.alfred' },
+    { label: 'new only', roots: ['.foliohaven'], selected: '.foliohaven' },
+    {
+      label: 'both',
+      roots: ['.foliohaven', '.alfred'],
+      selected: '.foliohaven',
+    },
+    { label: 'neither', roots: [], selected: '.foliohaven' },
+  ])(
+    'exports inside the selected root for $label and preserves unused state',
+    async ({ roots, selected }) => {
+      const { source } = await fixture();
+      for (const name of ['.foliohaven', '.alfred'])
+        await rm(join(source, name), { recursive: true, force: true });
+      for (const name of roots) {
+        await mkdir(join(source, name), { mode: 0o700 });
+        await writeFile(
+          join(source, name, 'sentinel'),
+          `${name}: unchanged\n`,
+          { mode: 0o600 },
+        );
+      }
+      const destination = join(source, selected, 'releases/candidate');
+      await run(source, '--directory', destination);
+      expect(
+        JSON.parse(
+          await readFile(join(destination, 'release-info.json'), 'utf8'),
+        ),
+      ).toMatchObject({ product: 'foliohaven', version: '0.1.0' });
+      const unused = selected === '.foliohaven' ? '.alfred' : '.foliohaven';
+      if (roots.includes(unused)) {
+        expect(await readdir(join(source, unused))).toEqual(['sentinel']);
+        expect(await readFile(join(source, unused, 'sentinel'), 'utf8')).toBe(
+          `${unused}: unchanged\n`,
+        );
+      } else
+        await expect(lstat(join(source, unused))).rejects.toMatchObject({
+          code: 'ENOENT',
+        });
+    },
+  );
+
   it('exports product sources, tests and licenses with neutral Dev Container and verifiable file inventory', async () => {
     const { source, directory, policy } = await fixture();
     const destination = join(directory, 'public');
@@ -242,7 +330,7 @@ describe('public release packaging', () => {
       ),
     ).toBe('font license\n');
     expect(files.join('\n')).not.toMatch(
-      /docs\/development|\.alfred|conversation|credentials\.key|node_modules|site\/dist|maintainer|publish-release|bulk-redirects|^\.env$/mu,
+      /docs\/development|\.foliohaven|\.alfred|conversation|credentials\.key|node_modules|site\/dist|maintainer|publish-release|bulk-redirects|^\.env$/mu,
     );
     const config = await readFile(
       join(destination, '.devcontainer/devcontainer.json'),

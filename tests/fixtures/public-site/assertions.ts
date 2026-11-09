@@ -14,6 +14,7 @@ import type {
   CategoryTreeNode,
   SeoViewModel,
 } from '@foliohaven/core';
+import { privateResource } from '../../../scripts/workspace-paths.mjs';
 import { prepareRenderContext } from '../../../server/src/build/render/context.js';
 import type { PreparedRenderContext } from '../../../server/src/build/render/types.js';
 
@@ -26,7 +27,7 @@ export type PublicSiteExpected = Pick<
 export async function publicSiteExpected(repositoryRoot: string) {
   const directory = join(
     repositoryRoot,
-    '.alfred/reports/public-site',
+    privateResource(repositoryRoot, 'reports/public-site'),
     randomUUID(),
   );
   try {
@@ -47,7 +48,7 @@ export async function publicSiteExpected(repositoryRoot: string) {
 }
 
 export function isPrivatePublicRequest(pathname: string): boolean {
-  return /^\/(?:api|server|studio|content|\.alfred)(?:\/|$)|^\/media\/source(?:\/|$)/u.test(
+  return /^\/(?:api|server|studio|content|\.foliohaven|\.alfred)(?:\/|$)|^\/media\/source(?:\/|$)/u.test(
     pathname,
   );
 }

@@ -1,7 +1,8 @@
+import { compatibleEnvironment } from '../scripts/workspace-paths.mjs';
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writeFile } from 'node:fs/promises';
 import { astroDevMedia } from '../scripts/astro-dev-media.mjs';
@@ -10,12 +11,14 @@ import { loadAstroConfigContext } from './src/lib/server/context.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const workspace = resolve(root, '..');
-const context = await loadAstroConfigContext();
-const contextRoot = process.env['ALFRED_RENDER_CONTEXT'];
+const contextRoot = compatibleEnvironment('FOLIOHAVEN_RENDER_CONTEXT');
 if (contextRoot === undefined) throw new Error('RENDER_CONTEXT_REQUIRED');
-const output = process.env['ALFRED_RENDER_OUTPUT'];
+const output = compatibleEnvironment('FOLIOHAVEN_RENDER_OUTPUT');
 if (output === undefined)
   throw new Error('RENDER_OUTPUT_REQUIRED：請使用專案的建置或開發入口。');
+if (!isAbsolute(output))
+  throw new Error('RENDER_OUTPUT_INVALID：網站輸出必須為絕對路徑。');
+const context = await loadAstroConfigContext();
 const indexed = new Set(
   context.routeManifest.routes
     .filter((route) => route.index)
@@ -81,6 +84,7 @@ export default defineConfig({
           ...[
             'content',
             'media/source',
+            '.foliohaven',
             '.alfred',
             '.git',
             'server',
@@ -114,9 +118,14 @@ export default defineConfig({
               if (
                 id.startsWith('node:') ||
                 id.includes('__vite-browser-external') ||
-                ['content', 'media/source', '.alfred', '.git'].some(
-                  (directory) =>
-                    id.startsWith(`${resolve(workspace, directory)}/`),
+                [
+                  'content',
+                  'media/source',
+                  '.foliohaven',
+                  '.alfred',
+                  '.git',
+                ].some((directory) =>
+                  id.startsWith(`${resolve(workspace, directory)}/`),
                 ) ||
                 id.startsWith(`${resolve(root, 'src/lib/server')}/`) ||
                 id.startsWith(`${resolve(workspace, 'server')}/`) ||

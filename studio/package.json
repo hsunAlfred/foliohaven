@@ -1,6 +1,6 @@
 {
   "name": "@foliohaven/studio",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "pnpm --dir .. dev:studio",
     "build": "vite build",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "node ../scripts/check-types.mjs studio"
   },
   "dependencies": {
     "@foliohaven/core": "workspace:*",

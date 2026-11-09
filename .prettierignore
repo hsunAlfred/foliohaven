@@ -15,6 +15,7 @@ media/**
 **/.vite/**
 **/.wrangler/**
 **/coverage/**
+.foliohaven/**
 .alfred/**
 pnpm-lock.yaml
 

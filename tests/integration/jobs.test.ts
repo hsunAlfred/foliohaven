@@ -30,7 +30,7 @@ function required<T>(value: T | undefined | null): T {
 }
 async function jobRecord(root: string, id: string): Promise<JobRecord> {
   const value = JSON.parse(
-    await readFile(join(root, `.alfred/jobs/${id}.json`), 'utf8'),
+    await readFile(join(root, `.foliohaven/jobs/${id}.json`), 'utf8'),
   ) as JobRecord;
   JobSchema.parse(value.job);
   return value;
@@ -78,9 +78,9 @@ async function commit(
   artifacts: ArtifactStore,
   context: JobContext,
 ) {
-  await safeMkdir(root, `.alfred/builds/${context.jobId}/output`);
+  await safeMkdir(root, `.foliohaven/builds/${context.jobId}/output`);
   await writeFile(
-    join(root, `.alfred/builds/${context.jobId}/output/index.html`),
+    join(root, `.foliohaven/builds/${context.jobId}/output/index.html`),
     '<!doctype html><p>job artifact</p>',
   );
   return (
@@ -664,7 +664,7 @@ describe('BUILD-03／JOB-01：artifact proof與原始建立工作回應', () => 
     const interrupted = await jobRecord(root, queued.id);
     expect(interrupted.job.status).toBe('running');
     await writeFile(
-      join(root, `.alfred/jobs/${queued.id}.json`),
+      join(root, `.foliohaven/jobs/${queued.id}.json`),
       JSON.stringify({
         ...interrupted,
         job: { ...interrupted.job, progress: { completed: 4, total: 6 } },
@@ -936,15 +936,15 @@ describe('JOB-01：其餘type介面、proof反例與晚取消', () => {
     expect(await crashed.done, crashed.error()).toBe(77);
     const interrupted = await jobRecord(root, queued.id);
     await writeFile(
-      join(root, `.alfred/jobs/${queued.id}.json`),
+      join(root, `.foliohaven/jobs/${queued.id}.json`),
       JSON.stringify({
         ...interrupted,
         job: { ...interrupted.job, progress: { completed: 4, total: 6 } },
       }),
     );
-    await safeMkdir(root, `.alfred/builds/${queued.id}/output`);
+    await safeMkdir(root, `.foliohaven/builds/${queued.id}/output`);
     await writeFile(
-      join(root, `.alfred/builds/${queued.id}/output/index.html`),
+      join(root, `.foliohaven/builds/${queued.id}/output/index.html`),
       '<!doctype html><p>uncommitted</p>',
     );
     const restarted = new JobManager({ repositoryRoot: root, artifacts });
@@ -1043,9 +1043,9 @@ describe('JOB-01：持有promotion ticket期間取消仍能先發出abort', () =
           completed: 4,
           total: 6,
         });
-        await safeMkdir(root, `.alfred/builds/${context.jobId}/output`);
+        await safeMkdir(root, `.foliohaven/builds/${context.jobId}/output`);
         await writeFile(
-          join(root, `.alfred/builds/${context.jobId}/output/index.html`),
+          join(root, `.foliohaven/builds/${context.jobId}/output/index.html`),
           '<!doctype html><p>prepared</p>',
         );
         const ticket = await artifacts.preparePromotion(context.jobId, {
@@ -1157,7 +1157,7 @@ describe('JOB-01／TAX-02：taxonomy同journal job completion proof', () => {
     expect(await crashed.done, crashed.error()).toBe(77);
     const interrupted = await jobRecord(root, queued.id);
     await writeFile(
-      join(root, `.alfred/jobs/${queued.id}.json`),
+      join(root, `.foliohaven/jobs/${queued.id}.json`),
       JSON.stringify({
         ...interrupted,
         job: { ...interrupted.job, progress: { completed: 0, total: 1 } },
@@ -1324,7 +1324,7 @@ describe('JOB-01：成功進度與歷史紀錄相容性', () => {
       ...persisted,
       job: { ...persisted.job, progress: { completed: 4, total: 6 } },
     };
-    const path = join(root, `.alfred/jobs/${queued.id}.json`);
+    const path = join(root, `.foliohaven/jobs/${queued.id}.json`);
     await writeFile(path, JSON.stringify(legacy));
     const before = await readFile(path);
     const expected = { ...legacy.job, progress: { completed: 6, total: 6 } };

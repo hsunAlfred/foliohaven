@@ -5,7 +5,7 @@ import { dirname, relative, resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Transform } from 'node:stream';
 import { BuildResultSchema, Sha256Schema, UuidSchema } from '@foliohaven/core';
-import { safeMkdir, safePath } from '../../files/io.js';
+import { privateResource, safeMkdir, safePath } from '../../files/io.js';
 import { buildProcessEnvironment } from '../../runtime/environment.js';
 import { runControlledProcess } from '../../runtime/process.js';
 import { prepareRenderContext, RenderError } from './context.js';
@@ -70,12 +70,15 @@ export async function renderSnapshot(
   const jobId = UuidSchema.parse(options.jobId);
   const revision = Sha256Schema.parse(options.snapshotRevision);
   const coordinationRoot = resolve(root, '../../../..');
-  if (relative(coordinationRoot, root) !== `.alfred/builds/${jobId}/snapshot`)
+  if (
+    relative(coordinationRoot, root) !==
+    privateResource(coordinationRoot, `builds/${jobId}/snapshot`)
+  )
     throw new RenderError(
       'INVALID_SNAPSHOT_DESTINATION',
       '正式呈現只能使用目前job的不可變快照。',
     );
-  const contextDirectory = resolve(root, '.alfred/render');
+  const contextDirectory = resolve(root, privateResource(root, 'render'));
   const outputDirectory = resolve(root, '../output');
   // 前次候選只能由外層復原與清理，worker不覆寫未知目錄。
   await mkdir(outputDirectory, { mode: 0o700 });
@@ -98,8 +101,8 @@ export async function renderSnapshot(
       ],
       cwd: root,
       env: buildProcessEnvironment({
-        ALFRED_RENDER_CONTEXT: contextDirectory,
-        ALFRED_RENDER_OUTPUT: outputDirectory,
+        FOLIOHAVEN_RENDER_CONTEXT: contextDirectory,
+        FOLIOHAVEN_RENDER_OUTPUT: outputDirectory,
       }),
       timeoutMs: 15 * 60_000,
       ...(options.signal === undefined ? {} : { signal: options.signal }),
@@ -125,7 +128,7 @@ export async function renderSnapshot(
       pendingLinkChecks: 0,
     };
     await writeFile(
-      await safePath(root, '.alfred/build-result.json'),
+      await safePath(root, privateResource(root, 'build-result.json')),
       JSON.stringify(report),
       { flag: 'wx', mode: 0o600 },
     );

@@ -1,0 +1,400 @@
+name: Full Release Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: full-release-${{ github.repository }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    name: quality
+    if: github.event.repository.visibility == 'public' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout the fixed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Prepare the cached toolchain
+        id: tools
+        uses: ./.github/actions/prepare-verification
+        with:
+          cache-write: 'true'
+      - name: Run complete quality and fixed-port checks
+        env:
+          VERIFICATION_IMAGE: ${{ steps.tools.outputs.image }}
+        run: docker run --name foliohaven-lane --init --shm-size=1g --env CI=true "$VERIFICATION_IMAGE" pnpm verify:lane --lane quality
+      - name: Collect the quality result
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/verification-lane"
+          docker cp foliohaven-lane:/workspaces/foliohaven/.foliohaven/reports/verification/quality.json "$RUNNER_TEMP/verification-lane/quality.json"
+      - name: Preserve the quality result
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-lane-quality-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/verification-lane/quality.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Collect quality failure diagnostics
+        if: failure()
+        run: docker cp foliohaven-lane:/workspaces/foliohaven/.foliohaven/reports "$RUNNER_TEMP/quality-failure" || true
+      - name: Preserve quality failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: quality-failure-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/quality-failure
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Remove the quality container
+        if: always()
+        run: docker rm -f foliohaven-lane || true
+
+  integration:
+    name: integration-${{ matrix.shard }}
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Checkout the fixed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Prepare an isolated toolchain
+        id: tools
+        uses: ./.github/actions/prepare-verification
+      - name: Run this integration partition
+        env:
+          VERIFICATION_IMAGE: ${{ steps.tools.outputs.image }}
+          VERIFICATION_LANE: integration-${{ matrix.shard }}
+        run: docker run --name foliohaven-lane --init --shm-size=1g --env CI=true "$VERIFICATION_IMAGE" pnpm verify:lane --lane "$VERIFICATION_LANE"
+      - name: Collect this integration result
+        if: always()
+        env:
+          VERIFICATION_LANE: integration-${{ matrix.shard }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/verification-lane"
+          docker cp "foliohaven-lane:/workspaces/foliohaven/.foliohaven/reports/verification/$VERIFICATION_LANE.json" "$RUNNER_TEMP/verification-lane/$VERIFICATION_LANE.json"
+      - name: Preserve this integration result
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-lane-integration-${{ matrix.shard }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/verification-lane/integration-${{ matrix.shard }}.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Collect integration failure diagnostics
+        if: failure()
+        run: docker cp foliohaven-lane:/workspaces/foliohaven/.foliohaven/reports "$RUNNER_TEMP/integration-failure" || true
+      - name: Preserve integration failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: integration-${{ matrix.shard }}-failure-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/integration-failure
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Remove the integration container
+        if: always()
+        run: docker rm -f foliohaven-lane || true
+
+  e2e:
+    name: e2e-${{ matrix.browser }}
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: Checkout the fixed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Prepare an isolated browser toolchain
+        id: tools
+        uses: ./.github/actions/prepare-verification
+      - name: Build and run this complete browser project
+        env:
+          VERIFICATION_IMAGE: ${{ steps.tools.outputs.image }}
+          VERIFICATION_LANE: e2e-${{ matrix.browser }}
+        run: docker run --name foliohaven-lane --init --shm-size=1g --env CI=true "$VERIFICATION_IMAGE" pnpm verify:lane --lane "$VERIFICATION_LANE"
+      - name: Collect this browser result
+        if: always()
+        env:
+          VERIFICATION_LANE: e2e-${{ matrix.browser }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/verification-lane"
+          docker cp "foliohaven-lane:/workspaces/foliohaven/.foliohaven/reports/verification/$VERIFICATION_LANE.json" "$RUNNER_TEMP/verification-lane/$VERIFICATION_LANE.json"
+      - name: Preserve this browser result
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-lane-e2e-${{ matrix.browser }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/verification-lane/e2e-${{ matrix.browser }}.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve browser failure diagnostics
+        if: failure()
+        run: docker cp foliohaven-lane:/workspaces/foliohaven/.foliohaven/reports "$RUNNER_TEMP/browser-failure" || true
+      - name: Upload browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-failure-${{ matrix.browser }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/browser-failure
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Remove the browser container
+        if: always()
+        run: docker rm -f foliohaven-lane || true
+
+  docker:
+    name: docker
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout the fixed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Warm only the common toolchain
+        id: tools
+        uses: ./.github/actions/prepare-verification
+      - name: Verify actual Docker cold start and image rebuild persistence
+        working-directory: ${{ steps.tools.outputs.source }}
+        run: bash scripts/check-release-docker.sh
+      - name: Record the Docker acceptance result
+        env:
+          VERIFICATION_SOURCE: ${{ steps.tools.outputs.source }}
+        run: |
+          node scripts/collect-verification.mjs record --source "$VERIFICATION_SOURCE" --lane docker \
+            --result "$VERIFICATION_SOURCE/.foliohaven/reports/release-docker-host" \
+            --output "$RUNNER_TEMP/docker.json"
+      - name: Preserve Docker acceptance
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-lane-docker-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/docker.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve Docker failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docker-failure-${{ github.run_attempt }}
+          path: ${{ steps.tools.outputs.source }}/.foliohaven/reports/release-docker-host
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+
+  uid:
+    name: uid-${{ matrix.uid }}-${{ matrix.gid }}
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - uid: 1000
+            gid: 1000
+          - uid: 1001
+            gid: 1001
+          - uid: 2000
+            gid: 2001
+    steps:
+      - name: Checkout the fixed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Build an image with this identity from the start
+        id: tools
+        uses: ./.github/actions/prepare-verification
+        with:
+          uid: ${{ matrix.uid }}
+          gid: ${{ matrix.gid }}
+          target: release
+          image: foliohaven-uid-${{ matrix.uid }}-${{ matrix.gid }}:ci
+          cache-write: 'true'
+      - name: Verify cold offline ownership and persisted authoring
+        working-directory: ${{ steps.tools.outputs.source }}
+        env:
+          IMAGE_UID: ${{ matrix.uid }}
+          IMAGE_GID: ${{ matrix.gid }}
+          VERIFICATION_IMAGE: ${{ steps.tools.outputs.image }}
+        run: bash scripts/check-release-uids.sh --uid "$IMAGE_UID" --gid "$IMAGE_GID" --image "$VERIFICATION_IMAGE"
+      - name: Record this UID result
+        env:
+          VERIFICATION_SOURCE: ${{ steps.tools.outputs.source }}
+          IMAGE_UID: ${{ matrix.uid }}
+          IMAGE_GID: ${{ matrix.gid }}
+        run: |
+          node scripts/collect-verification.mjs record --source "$VERIFICATION_SOURCE" --lane "uid-$IMAGE_UID-$IMAGE_GID" \
+            --result "$VERIFICATION_SOURCE/.foliohaven/reports/release-uid-check/latest-$IMAGE_UID-$IMAGE_GID.json" \
+            --output "$RUNNER_TEMP/uid-$IMAGE_UID-$IMAGE_GID.json"
+      - name: Preserve this UID result
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-lane-uid-${{ matrix.uid }}-${{ matrix.gid }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/uid-${{ matrix.uid }}-${{ matrix.gid }}.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve UID failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: uid-${{ matrix.uid }}-${{ matrix.gid }}-failure-${{ github.run_attempt }}
+          path: ${{ steps.tools.outputs.source }}/.foliohaven/reports/release-uid-check
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+
+  native:
+    name: native
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout the fixed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Set up fixed native Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Install native tools
+        run: |
+          npm install --global --no-audit --no-fund pnpm@12.15.0
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg build-essential python3 util-linux
+      - name: Reuse native downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/pnpm/store
+          key: native-linux-node26-pnpm12-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '**/package.json') }}
+      - name: Export immutable input and a mutable native workspace
+        run: |
+          node scripts/package-release.mjs --source "$GITHUB_WORKSPACE" --directory "$RUNNER_TEMP/native-input"
+          cp -a "$RUNNER_TEMP/native-input" "$RUNNER_TEMP/native-workspace"
+      - name: Verify the real native toolchain
+        working-directory: ${{ runner.temp }}/native-workspace
+        run: |
+          pnpm install --frozen-lockfile --prod=false
+          pnpm exec playwright install --with-deps chromium firefox webkit
+          pnpm run setup
+          pnpm check:compiler
+          pnpm typecheck
+          pnpm build
+      - name: Verify native authoring and restart persistence
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          private = pathlib.Path(os.environ['RUNNER_TEMP'], 'native-workspace/.foliohaven')
+          private.mkdir(mode=0o700, exist_ok=True)
+          marker = private / 'release-check-workspace.json'
+          with marker.open('x') as output:
+              json.dump({'schemaVersion': 1, 'purpose': 'release-validation'}, output)
+          marker.chmod(0o600)
+          PY
+          node scripts/check-release-native.mjs --source "$RUNNER_TEMP/native-workspace"
+      - name: Record native acceptance against the immutable input
+        run: |
+          node scripts/collect-verification.mjs record --source "$RUNNER_TEMP/native-input" --lane native \
+            --result "$RUNNER_TEMP/native-workspace/.foliohaven/reports/release-native-check/result.json" \
+            --output "$RUNNER_TEMP/native.json"
+      - name: Preserve native acceptance
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-lane-native-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve native failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-failure-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native-workspace/.foliohaven/reports
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+
+  release-verify:
+    name: release-verify
+    if: always()
+    needs: [quality, integration, e2e, docker, uid, native]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Require every prerequisite job
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          VERIFICATION_REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          values = json.loads(os.environ['RESULTS'])
+          assert os.environ.get('VERIFICATION_REPOSITORY_VISIBILITY') == 'public' and os.environ.get('GITHUB_REF') == 'refs/heads/main', 'full verification requires a public repository main branch'
+          assert values and all(job['result'] == 'success' for job in values.values()), 'full verification is incomplete'
+          PY
+      - name: Checkout the fixed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Set up fixed Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Download all lane results
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: verification-lane-*-${{ github.run_attempt }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/verification-lanes
+      - name: Export and collect the exact public qualification
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          node scripts/package-release.mjs --source "$GITHUB_WORKSPACE" --directory "$RUNNER_TEMP/qualification-source"
+          node scripts/collect-verification.mjs collect --source "$RUNNER_TEMP/qualification-source" \
+            --reports "$RUNNER_TEMP/verification-lanes" \
+            --output "$RUNNER_TEMP/verification-evidence.json" \
+            --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" --sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Preserve the complete qualification
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-evidence
+          overwrite: true
+          path: ${{ runner.temp }}/verification-evidence.json
+          if-no-files-found: error
+          retention-days: 30

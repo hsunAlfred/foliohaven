@@ -1,3 +1,4 @@
+import { privateResource } from './workspace-paths.mjs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import {
@@ -24,7 +25,7 @@ try {
   const before = await scanBuildInputs(root, { signal: controller.signal });
   const prepared = await prepareRenderContext({
     repositoryRoot: root,
-    contextDirectory: resolve(root, '.alfred/validation/render'),
+    contextDirectory: resolve(root, privateResource(root, 'validation/render')),
     signal: controller.signal,
   });
   if (

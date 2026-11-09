@@ -355,7 +355,7 @@ describe('MEDIA-01/02: real native limits, source and compiled workers, cross-pr
     await expect(
       add(service, apng, 'animated.png', 'image/png'),
     ).rejects.toMatchObject({ code: 'MEDIA_ANIMATION_UNSUPPORTED' });
-    expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
   });
   it('checks genuine EBML DocType, accepting real WebM and rejecting Matroska with spoofed webm metadata', async () => {
     const { root, service } = await fixture();
@@ -407,7 +407,7 @@ describe('MEDIA-01/02: real native limits, source and compiled workers, cross-pr
       width: 16,
       height: 16,
     });
-    expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
   });
   it('corrects MOV rotation and non-square pixel aspect while retaining display proportions', async () => {
     const { root, service } = await fixture();
@@ -500,7 +500,7 @@ describe('MEDIA-01/02: real native limits, source and compiled workers, cross-pr
     expect(updated.value.asset).toBeNull();
     await service.process(source.value.id);
     expect(
-      (await readdir(join(root, '.alfred/media'))).filter((name) =>
+      (await readdir(join(root, '.foliohaven/media'))).filter((name) =>
         /^[a-f0-9]{64}$/u.test(name),
       ),
     ).toHaveLength(2);
@@ -566,7 +566,7 @@ describe('MEDIA-01/02: real native limits, source and compiled workers, cross-pr
     });
     expect((await service.get(source.value.id)).value.asset).toBeNull();
     expect(
-      (await readdir(join(root, '.alfred/media'))).filter((name) =>
+      (await readdir(join(root, '.foliohaven/media'))).filter((name) =>
         name.endsWith('.part'),
       ),
     ).toEqual([]);
@@ -687,7 +687,7 @@ describe('MEDIA-01/02: real native limits, source and compiled workers, cross-pr
     });
     expect(lease).not.toBeNull();
     await lease?.release();
-    expect(await readdir(join(root, '.alfred/media-work'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/media-work'))).toEqual([]);
   });
   it('enforces real 40MP and 512MiB boundaries using bounded memory streams', async () => {
     const { root, service } = await fixture();
@@ -709,6 +709,6 @@ describe('MEDIA-01/02: real native limits, source and compiled workers, cross-pr
         mimeType: 'video/mp4',
       }),
     ).rejects.toMatchObject({ status: 413 });
-    expect(await readdir(join(root, '.alfred/staging'))).toEqual([]);
+    expect(await readdir(join(root, '.foliohaven/staging'))).toEqual([]);
   });
 });

@@ -7,6 +7,7 @@ import {
   lstat,
   mkdir,
   mkdtemp,
+  open,
   readFile,
   readdir,
   realpath,
@@ -16,6 +17,10 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
+import {
+  PRIVATE_DIRECTORY_NAMES,
+  privateDirectoryName,
+} from './workspace-paths.mjs';
 
 const execute = promisify(execFile);
 const product = 'foliohaven';
@@ -23,6 +28,7 @@ const ignoredNames = new Set([
   '.git',
   '.codex',
   '.ssh',
+  '.foliohaven',
   '.alfred',
   'node_modules',
   'dist',
@@ -181,11 +187,12 @@ async function prepareDestination(sourceRoot, destination) {
     (!fromTarget.startsWith(`..${sep}`) && fromTarget !== '..') ||
     (!fromSource.startsWith(`..${sep}`) &&
       fromSource !== '..' &&
-      fromSource.split(sep)[0] !== '.alfred')
+      (!PRIVATE_DIRECTORY_NAMES.includes(fromSource.split(sep)[0]) ||
+        fromSource.split(sep)[0] !== privateDirectoryName(sourceRoot)))
   )
     fail(
       'RELEASE_DESTINATION_INVALID',
-      '請使用專案外的空目錄，或專案內 .alfred/ 下的新目錄。',
+      '請使用專案外的空目錄，或專案內目前選定私有資料目錄下的新目錄。',
     );
   const stat = await statIfPresent(target);
   if (stat && (!stat.isDirectory() || (await readdir(target)).length > 0))
@@ -272,7 +279,7 @@ async function withSource(sourceRoot, operation) {
   }
 }
 
-async function copyPublicSource(root, destination) {
+async function copyPublicSource(root, destination, verifyWorkingTree = false) {
   const policy = await policyFor(root);
   await sourceStat(root, 'package.json');
   const version = versionOf(
@@ -280,6 +287,14 @@ async function copyPublicSource(root, destination) {
   );
   const files = [];
   const copied = new Set();
+  const inputs = new Map();
+  const absent = new Set();
+  const directories = [];
+  const sourceChanged = () =>
+    fail(
+      'VERIFY_SOURCE_CHANGED',
+      '驗證快照建立期間來源改變，請停止修改後重試。',
+    );
 
   async function ensureOutputDirectory(path) {
     if (await statIfPresent(path)) return;
@@ -292,14 +307,25 @@ async function copyPublicSource(root, destination) {
     if (excluded(outputPath) || copied.has(outputPath)) return;
     const input = join(root, sourcePath);
     const stat = await sourceStat(root, sourcePath);
-    if (!stat) return;
+    if (!stat) {
+      if (verifyWorkingTree) absent.add(sourcePath);
+      return;
+    }
     if (stat.isSymbolicLink())
       fail('RELEASE_SOURCE_INVALID', `公開來源不得含符號連結：${outputPath}。`);
     const output = join(destination, outputPath);
     if (stat.isDirectory()) {
+      const names = (await readdir(input)).sort();
+      if (verifyWorkingTree)
+        directories.push({
+          sourcePath,
+          outputPath,
+          mode: stat.mode & 0o777,
+          names: names.filter((name) => !excluded(`${outputPath}/${name}`)),
+        });
       await ensureOutputDirectory(output);
       await chmod(output, stat.mode & 0o777);
-      for (const name of (await readdir(input)).sort())
+      for (const name of names)
         await copyEntry(`${sourcePath}/${name}`, `${outputPath}/${name}`);
       return;
     }
@@ -309,7 +335,42 @@ async function copyPublicSource(root, destination) {
         `公開來源含不支援的檔案類型：${outputPath}。`,
       );
     await ensureOutputDirectory(dirname(output));
-    await copyFile(input, output, constants.COPYFILE_EXCL);
+    if (verifyWorkingTree) {
+      const handle = await open(
+        input,
+        constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+      );
+      try {
+        const before = await handle.stat();
+        if (
+          !before.isFile() ||
+          before.ino !== stat.ino ||
+          before.dev !== stat.dev
+        )
+          sourceChanged();
+        const bytes = await handle.readFile();
+        const after = await handle.stat();
+        if (
+          before.size !== after.size ||
+          before.mtimeMs !== after.mtimeMs ||
+          before.ctimeMs !== after.ctimeMs
+        )
+          sourceChanged();
+        const sha256 = createHash('sha256').update(bytes).digest('hex');
+        const signature = {
+          mode: stat.mode & 0o777,
+          bytes: bytes.length,
+          sha256,
+        };
+        const previous = inputs.get(sourcePath);
+        if (previous && JSON.stringify(previous) !== JSON.stringify(signature))
+          sourceChanged();
+        inputs.set(sourcePath, signature);
+        await writeFile(output, bytes, { flag: 'wx', mode: stat.mode & 0o777 });
+      } finally {
+        await handle.close();
+      }
+    } else await copyFile(input, output, constants.COPYFILE_EXCL);
     await chmod(output, stat.mode & 0o777);
     const bytes = await readFile(output);
     files.push({
@@ -359,16 +420,68 @@ async function copyPublicSource(root, destination) {
   }
   await copyEntry(template, '.devcontainer');
   const githubTemplate = existingInfo ? '.github' : policy.githubTemplate;
-  const publicWorkflow = `${githubTemplate}/workflows/check.yml`;
-  const workflowStat = await sourceStat(root, publicWorkflow);
-  if (!workflowStat?.isFile() || workflowStat.isSymbolicLink())
-    fail('RELEASE_SOURCE_INVALID', '公開 CI 設定不完整。');
-  await copyEntry(publicWorkflow, '.github/workflows/check.yml');
+  for (const name of ['check.yml', 'release-verify.yml']) {
+    const publicWorkflow = `${githubTemplate}/workflows/${name}`;
+    const workflowStat = await sourceStat(root, publicWorkflow);
+    if (!workflowStat?.isFile() || workflowStat.isSymbolicLink())
+      fail('RELEASE_SOURCE_INVALID', '公開 CI 設定不完整。');
+    await copyEntry(publicWorkflow, `.github/workflows/${name}`);
+  }
+  const publicAction = `${githubTemplate}/actions/prepare-verification/action.yml`;
+  if (!(await sourceStat(root, publicAction))?.isFile())
+    fail('RELEASE_SOURCE_INVALID', '公開驗證準備 action 不完整。');
+  await copyEntry(
+    publicAction,
+    '.github/actions/prepare-verification/action.yml',
+  );
   for (const path of policy.requiredFiles) {
     if (!copied.has(path))
       fail('RELEASE_SOURCE_INVALID', `缺少必要的公開檔案：${path}。`);
   }
   files.sort((left, right) => left.path.localeCompare(right.path, 'en'));
+  if (verifyWorkingTree) {
+    for (const path of absent)
+      if (await sourceStat(root, path)) sourceChanged();
+    if (
+      JSON.stringify(await policyFor(root)) !== JSON.stringify(policy) ||
+      versionOf(await jsonFile(join(root, 'package.json'), '套件設定')) !==
+        version
+    )
+      sourceChanged();
+    for (const { sourcePath, outputPath, mode, names } of directories) {
+      const current = await sourceStat(root, sourcePath);
+      if (
+        !current?.isDirectory() ||
+        (current.mode & 0o777) !== mode ||
+        JSON.stringify(
+          (await readdir(join(root, sourcePath)))
+            .sort()
+            .filter((name) => !excluded(`${outputPath}/${name}`)),
+        ) !== JSON.stringify(names)
+      )
+        sourceChanged();
+    }
+    for (const [path, signature] of inputs) {
+      const current = await sourceStat(root, path);
+      if (!current?.isFile() || (current.mode & 0o777) !== signature.mode)
+        sourceChanged();
+      const handle = await open(
+        join(root, path),
+        constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+      );
+      try {
+        if (!(await handle.stat()).isFile()) sourceChanged();
+        const bytes = await handle.readFile();
+        if (
+          bytes.length !== signature.bytes ||
+          createHash('sha256').update(bytes).digest('hex') !== signature.sha256
+        )
+          sourceChanged();
+      } finally {
+        await handle.close();
+      }
+    }
+  }
   const info = { format: 1, product, version, files };
   await writeFile(
     join(destination, 'release-info.json'),
@@ -387,6 +500,23 @@ export async function exportReleaseWorkspace({ sourceRoot, destination }) {
     const target = await prepareDestination(originalRoot, destination);
     return copyPublicSource(root, target);
   });
+}
+
+/** Local verification only: snapshot current allowed bytes, including uncommitted edits.
+ * Release APIs above retain their committed/clean Git requirement unchanged. */
+export async function exportVerificationWorkspace({ sourceRoot, destination }) {
+  const input = resolve(sourceRoot);
+  const stat = await statIfPresent(input);
+  if (!stat?.isDirectory() || stat.isSymbolicLink())
+    fail('RELEASE_SOURCE_INVALID', '驗證來源必須為一般專案目錄。');
+  const root = await realpath(input);
+  const target = await prepareDestination(root, destination);
+  try {
+    return await copyPublicSource(root, target, true);
+  } catch (error) {
+    await rm(target, { recursive: true, force: true });
+    throw error;
+  }
 }
 
 export async function packageRelease({ sourceRoot, destination }) {

@@ -4,6 +4,8 @@
 
 網站仍然是靜態網站。Studio、管理 API、文章原始檔、憑證及備份不會上傳。Studio「更新網站」只更新本機網站；發布到 Cloudflare 是另一個明確動作。
 
+本文私有資料路徑以 `.foliohaven/` 表示；既有專案的實際目錄依[版本更新與備份](../blog/版本更新與備份.md)的相容性規則，不為配合範例搬移或另建部署資料。
+
 ## 1. 準備本機工作環境與網站
 
 先依 [README](../../README.md) 完成 Docker 或原生 Linux 環境初始化，確認 Studio `5173`、來源預覽 `4321` 與成功網站 `4322` 的使用方式。不需要另外全域安裝 Wrangler，也不需要登入 Wrangler；專案會使用鎖定的工具與你提供的憑證。
@@ -111,7 +113,7 @@ docker compose exec app pnpm deploy:cloudflare
 
 大影片使用串流分段上傳，不受 Worker 單檔 25 MiB 限制；仍需符合 R2 容量及本機可用記憶體、備份磁碟限制。單檔含重試的傳輸時間有上限，程序會顯示階段及進度；不要將「本機讀取 bytes」誤認為已由遠端確認。
 
-每次命令會輸出 `deploymentId`，也就是這次部署的 UUID。請保留它；結果與復原資料在私有 `.alfred/deployments/<UUID>/`，摘要為 `receipt.json`，逐檔清單為 `manifest.json`。
+每次命令會輸出 `deploymentId`，也就是這次部署的 UUID。請保留它；結果與復原資料在私有 `.foliohaven/deployments/<UUID>/`，摘要為 `receipt.json`，逐檔清單為 `manifest.json`。
 
 **`uploadStatus: uploaded` 表示 R2 與 Worker 上傳範圍完成。** 初次網域尚未設定時，`domainVerification` 仍是 `pending`。這時不能用 `workers.dev` 宣稱全站可用，因為樣式與媒體是由下一節的自訂網域分流到 R2。
 
@@ -221,7 +223,7 @@ pnpm verify:cloudflare --domain https://blog.example.com --deployment <UUID>
 
 `<UUID>` 是說明用代稱，執行時請換成實際值，不輸入角括號。Docker 同樣在前面加 `docker compose exec app`。
 
-命令會檢查這次網站的公開檔案、MIME、XML 原路徑、404、SEO 與影片 Range，並以 Chromium、Firefox、WebKit 檢查頁面及影片播放、跳轉後續播；報告與截圖保存在 `.alfred/reports/cloudflare/<UUID>/`。網址須是公開 HTTPS 根網址，不能指定本機、私有網路、其他 port 或額外路徑。
+命令會檢查這次網站的公開檔案、MIME、XML 原路徑、404、SEO 與影片 Range，並以 Chromium、Firefox、WebKit 檢查頁面及影片播放、跳轉後續播；報告與截圖保存在 `.foliohaven/reports/cloudflare/<UUID>/`。網址須是公開 HTTPS 根網址，不能指定本機、私有網路、其他 port 或額外路徑。
 
 報告的 `scope: automatic`、`status: passed` 與收據中的 `domainVerification` 記錄自動檢查結果；`manualVerification: pending` 表示控制台與人工項目仍需另行確認。自動命令成功不代表人工項目已完成。每次重新驗證會先標為待驗收；取消或發生錯誤會保存本次已完成的檢查，不沿用上次的通過結果。`404.html` 會透過專屬的不存在網址核對錯誤頁，不要求明確的 `/404.html` 本身也回 404。
 
@@ -230,6 +232,8 @@ pnpm verify:cloudflare --domain https://blog.example.com --deployment <UUID>
 搭配 **Workers Routes** 與 **Cloud Connector** 頁面確認：`/assets/`、`/media/` 命中資源的 Connector 規則、目的地為 R2 公開來源，並由較精確的 None 路由繞過網站 Worker；首頁與 XML 不命中該 Connector，對應網站 Worker 的 Static Assets。Static Assets 可直接回傳檔案而不執行 Worker code，因此沒有 Worker execution 節點不能單獨判定失敗；介面沒有顯示明確節點時，以既有 Routes／Connector 設定與模擬結果一起判讀，參見 [Static Assets](https://developers.cloudflare.com/workers/static-assets/)。
 
 再次發布前後核對三條 Routes 與 Cloud Connector 未改動。人工結果請記錄對應 deployment UUID、domain、日期、確認者及範圍，與 HTTP／瀏覽器報告分開保存；自動 CLI 的 `manualVerification: pending` 不會代替人工簽認，也不需為了勾選結果手動修改部署 journal／receipt。
+
+除上述自動驗證與規則查證外，正式網址還需依[網站開發與品質標準](../blog/網站開發與品質標準.md)補做人工品質驗收：抽查首頁、固定頁、文章、分類／Tag、搜尋與 404 等實際部署頁型，對照[SEO 設定與繼承](../blog/SEO設定與繼承.md)確認 SEO 生效結果符合內容與設定預期，檢查圖片／影片載入、更新後資源與快取表現，並另以 PageSpeed Insights 量測代表頁的手機及桌機結果，記錄 URL、日期、工具與測試條件。`verify:cloudflare` 不會自動量測 PageSpeed；這些品質結果與逐檔校驗、三瀏覽器及人工規則查證分別記錄，本機 Build 或 `uploaded` 不能代替正式網址的品質驗收。
 
 若交由 AI 協助，請先明確告知「Cloudflare 設定完成」並提供正式 domain，之後才請它驗證；不需要提供 token。測試大影片時，需另外包含大於 25 MiB 的有效影片及 512 MiB 級上傳，不能只用隨附短片推定大檔通過。
 
@@ -257,15 +261,23 @@ Worker 會以原版本建立一筆新的部署，因此部署識別碼會改變�
 
 幾項使用界線：
 
-- 覆寫前會先把本輪全部舊檔備份到 `.alfred/deployments/<UUID>/backups/r2/`。請預留足夠磁碟，不清除這些紀錄來排錯。
+- 覆寫前會先把本輪全部舊檔備份到 `.foliohaven/deployments/<UUID>/backups/r2/`。請預留足夠磁碟，不清除這些紀錄來排錯。
 - R2 同一 key 的新內容一寫入，就可能被舊網站讀到。R2、Worker 與 CDN 沒有全站原子切換；Worker 發布失敗不代表線上完全沒變。
 - 成功的新 key 與舊版未再引用的 key 會保留。工具不鏡像清空 bucket、不自動清 CDN，也不自動按天數刪除本機備份。
 - 單次條件式 PUT 與 multipart 的並寫保護不同；不要從別台主機或控制台同時改同一 bucket。
 - `restored` 代表可核對的遠端資料與版本回復，不代替正式網址、瀏覽器及 CDN 驗證；還原後再驗公開網址。
 
-更新系統版本或搬移網站時，連同根目錄實際設定、憑證、完整 `.alfred/`、作者資料與對應程式一併私下備份。具體方式見[版本更新與備份](../blog/版本更新與備份.md)。
+更新系統版本或搬移網站時，連同根目錄實際設定、憑證、完整 `.foliohaven/`、作者資料與對應程式一併私下備份。具體方式見[版本更新與備份](../blog/版本更新與備份.md)。
 
 還原後要驗證舊網站時，請使用被回復版本原本的部署 UUID；剛執行 restore 的 UUID 記錄的是被撤銷的新版，不能用那份新版清單驗舊網站。保留歷次部署目錄，才能找到對應清單。
+
+### 7.1 部署識別與舊版相容
+
+新操作的 Worker 訊息為 `foliohaven deploy <UUID>`／`foliohaven restore <UUID>`；R2 物件 metadata 使用 `foliohaven-sha256`（檔案雜湊）、`foliohaven-byte-size`（檔案大小）、`foliohaven-deployment-id`（部署識別）。這些由工具自動產生，不需要到控制台填寫，也不是 Worker 或 bucket 名稱。
+
+工具仍辨識舊 `alfred-wiki deploy/restore <UUID>` 與完整的 `alfred-*` metadata。兩套 metadata 同時存在時，必須完整且值一致；不接受欄位混搭、不完整的新組或衝突，也不藉舊組繞過驗證。UUID、版本、資源歸屬及未知結果的守門保持。
+
+既有遠端資源不因改名批次更新；未變更的舊物件可沿用，新增或真正更新時才寫新格式。journal、備份、原始 metadata 與指紋不轉寫；還原時恢復備份的原始 metadata。資料目錄沿用規則及完整備份方式見[版本更新與備份](../blog/版本更新與備份.md)的相容性章節。
 
 ## 8. 舊網址與 Bulk Redirects
 

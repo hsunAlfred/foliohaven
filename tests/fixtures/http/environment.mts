@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
+import { privateResource } from '../../../scripts/workspace-paths.mjs';
 import type { IncomingHttpHeaders } from 'node:http';
 import {
   ArticleWriteSchema,
@@ -92,18 +93,22 @@ export const smallBuild: NonNullable<BuildCoordinatorOptions['execution']> = {
     // 只驗HTTP→正式coordinator→journal promotion；不宣稱此fixture為Astro SSG。
     const output = join(
       context.repositoryRoot,
-      '.alfred/builds',
-      context.jobId,
-      'output',
+      privateResource(context.repositoryRoot, `builds/${context.jobId}/output`),
     );
-    await mkdir(output, { recursive: true });
+    await mkdir(output, { recursive: true, mode: 0o700 });
     await writeFile(
       join(output, 'index.html'),
       '<!doctype html><p>HTTP build transport fixture</p>',
     );
-    await mkdir(join(context.snapshotRoot, '.alfred'), { recursive: true });
+    await mkdir(
+      join(context.snapshotRoot, privateResource(context.snapshotRoot)),
+      { recursive: true, mode: 0o700 },
+    );
     await writeFile(
-      join(context.snapshotRoot, '.alfred/build-result.json'),
+      join(
+        context.snapshotRoot,
+        privateResource(context.snapshotRoot, 'build-result.json'),
+      ),
       JSON.stringify({
         schemaVersion: 1,
         mediaPending: false,
@@ -155,9 +160,11 @@ export async function call(
     raw?: Buffer | string;
     headers?: Record<string, string>;
     authorized?: boolean;
+    legacyHeaders?: boolean;
   } = {},
 ): Promise<HttpResult> {
   const method = input.method ?? 'GET';
+  const headerPrefix = input.legacyHeaders ? 'x-alfred' : 'x-foliohaven';
   const bytes =
     input.raw !== undefined
       ? Buffer.from(input.raw)
@@ -175,10 +182,10 @@ export async function call(
         headers: {
           ...(input.authorized === false
             ? {}
-            : { 'x-alfred-process-token': token }),
+            : { [`${headerPrefix}-process-token`]: token }),
           ...(method === 'GET'
             ? {}
-            : { origin, 'x-alfred-studio-origin': origin }),
+            : { origin, [`${headerPrefix}-studio-origin`]: origin }),
           ...(input.body === undefined
             ? {}
             : { 'content-type': 'application/json' }),

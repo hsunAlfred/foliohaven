@@ -1,3 +1,4 @@
+import { privateResource } from './workspace-paths.mjs';
 import { watch } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -13,7 +14,7 @@ import {
 } from '@foliohaven/server';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const directory = resolve(root, '.alfred/dev/render');
+const directory = resolve(root, privateResource(root, 'dev/render'));
 const parentPipe = process.argv[3] === '--parent-pipe';
 const cancelledCodes = new Set([
   'BUILD_CANCELLED',

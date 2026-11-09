@@ -111,11 +111,12 @@ async function fixture() {
   };
   for (const [path, value] of Object.entries(files))
     await writeFile(join(root, path), value);
-  await cp(
-    join(repository, 'scripts/render-dev.mjs'),
-    join(root, 'scripts/render-dev.mjs'),
-  );
-  const contextDirectory = join(root, '.alfred/dev/render');
+  for (const script of ['render-dev.mjs', 'workspace-paths.mjs'])
+    await cp(
+      join(repository, 'scripts', script),
+      join(root, 'scripts', script),
+    );
+  const contextDirectory = join(root, '.foliohaven/dev/render');
   await prepareRenderContext({ repositoryRoot: root, contextDirectory });
   return {
     root,
@@ -154,7 +155,7 @@ process.stdout.write('ready\\n');
   return child;
 }
 async function ownedWriterDescriptors(root: string): Promise<string[]> {
-  const target = join(root, '.alfred/locks/writer.lock');
+  const target = join(root, '.foliohaven/locks/writer.lock');
   const fds: string[] = [];
   for (const fd of await readdir(`/proc/${process.pid}/fd`)) {
     try {
@@ -179,7 +180,7 @@ async function blockedWriterHelper(root: string): Promise<number | null> {
       if (
         command.startsWith('flock\0') &&
         (await readlink(`/proc/${id}/fd/3`)) ===
-          join(root, '.alfred/locks/writer.lock')
+          join(root, '.foliohaven/locks/writer.lock')
       )
         return Number(id);
     } catch {

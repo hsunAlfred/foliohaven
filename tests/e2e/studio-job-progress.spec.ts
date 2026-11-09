@@ -1,3 +1,4 @@
+import { privateResource } from '../../scripts/workspace-paths.mjs';
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
@@ -143,7 +144,10 @@ test('工作進度：真Build完成後legacy4/6只投影6/6，unknown及零總�
   try {
     const built = await realBuild(page, environment);
     expect(built.progress).toEqual({ completed: 6, total: 6 });
-    const jobPath = join(environment.root, `.alfred/jobs/${built.id}.json`);
+    const jobPath = join(
+      environment.root,
+      privateResource(environment.root, `jobs/${built.id}.json`),
+    );
     const record = object(JSON.parse(await readFile(jobPath, 'utf8')));
     const originalDist = await readFile(
       join(environment.root, 'dist/index.html'),
@@ -168,10 +172,14 @@ test('工作進度：真Build完成後legacy4/6只投影6/6，unknown及零總�
       },
     ]) {
       const legacy = JobSchema.parse({ ...built, progress: fixture.progress });
-      await atomicJson(environment.root, `.alfred/jobs/${built.id}.json`, {
-        ...record,
-        job: legacy,
-      });
+      await atomicJson(
+        environment.root,
+        privateResource(environment.root, `jobs/${built.id}.json`),
+        {
+          ...record,
+          job: legacy,
+        },
+      );
       const legacyBytes = await readFile(jobPath);
       expect((await getJob(page, environment, built.id)).progress).toEqual(
         fixture.projected,
@@ -219,7 +227,7 @@ test('工作進度：running與失敗取消中斷的4/6維持真實計數，終�
       'interrupted',
     ] as const) {
       const job = variant(built, status, { completed: 4, total: 6 });
-      const relative = `.alfred/jobs/${job.id}.json`;
+      const relative = privateResource(environment.root, `jobs/${job.id}.json`);
       await atomicJson(environment.root, relative, {
         schemaVersion: 1,
         job,
@@ -280,7 +288,10 @@ test('工作進度：各狀態unknown與零總量文案正確，合法GET投影�
       join(environment.root, 'dist/index.html'),
     );
     const originalArtifact = await artifact(page, environment);
-    const jobPath = join(environment.root, `.alfred/jobs/${built.id}.json`);
+    const jobPath = join(
+      environment.root,
+      privateResource(environment.root, `jobs/${built.id}.json`),
+    );
     const originalRecord = await readFile(jobPath);
     const writes = rejectUiWrites(page);
     const detailUrl = `**/api/v1/jobs/${built.id}`;

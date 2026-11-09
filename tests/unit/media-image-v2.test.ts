@@ -119,11 +119,11 @@ describe('article-image-v2 media preset', () => {
     const generated = await service.process(source.id);
     const bindingPath = join(
       root,
-      '.alfred/media-records',
+      '.foliohaven/media-records',
       source.id + '.json',
     );
     const current = JSON.parse(await readFile(bindingPath, 'utf8')) as Binding;
-    const v2Directory = join(root, '.alfred/media', current.processingHash);
+    const v2Directory = join(root, '.foliohaven/media', current.processingHash);
     const generatedCache = JSON.parse(
       await readFile(join(v2Directory, 'cache.json'), 'utf8'),
     ) as WorkerResult;
@@ -142,7 +142,7 @@ describe('article-image-v2 media preset', () => {
       tools: generatedCache.tools,
     });
     expect(legacyHash).not.toBe(current.processingHash);
-    const legacyDirectory = join(root, '.alfred/media', legacyHash);
+    const legacyDirectory = join(root, '.foliohaven/media', legacyHash);
     await mkdir(legacyDirectory);
     const legacyOutputs = generatedCache.outputs.filter(({ variant }) =>
       /^image(?:-[1-9]\d*)?\.webp$/u.test(variant),
@@ -168,7 +168,7 @@ describe('article-image-v2 media preset', () => {
     await receipts.commit(jobId, legacy, new Date().toISOString());
     const receiptPath = join(
       root,
-      '.alfred/media-job-receipts',
+      '.foliohaven/media-job-receipts',
       jobId + '.json',
     );
     const receiptBytes = await readFile(receiptPath);

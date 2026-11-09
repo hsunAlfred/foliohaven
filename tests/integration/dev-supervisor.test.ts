@@ -252,7 +252,7 @@ describe('real development supervisor', () => {
       try {
         const index: { status?: string } = JSON.parse(
           await readFile(
-            join(fixture.root, '.alfred/dev/render/index.json'),
+            join(fixture.root, '.foliohaven/dev/render/index.json'),
             'utf8',
           ),
         );
