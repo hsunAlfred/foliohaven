@@ -185,7 +185,7 @@ export async function runDeployment({
       manifestDigest: null,
       tools: {
         node: process.versions.node,
-        wrangler: '4.152.0',
+        wrangler: '4.166.0',
         awsSdk: '3.1156.0',
       },
       capacityEvidence:
@@ -639,7 +639,7 @@ export async function checkInstalledTools() {
     );
   const require = createRequire(new URL('../../package.json', import.meta.url));
   for (const [name, version] of [
-    ['wrangler', '4.152.0'],
+    ['wrangler', '4.166.0'],
     ['@aws-sdk/client-s3', '3.1156.0'],
   ]) {
     const path = require.resolve(`${name}/package.json`);
