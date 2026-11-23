@@ -1,8 +1,8 @@
-FROM node:26.12.1-trixie@sha256:a98e6fda54fdbb22d4238054cca9a2a113bcd1191c09193a535aae22f400aa8e AS os-toolchain
+FROM node:26.13.1-trixie@sha256:e18c3ccdf7d71619990b0e85639f506e2028a95410999cab24cc373cbd10e0ac AS os-toolchain
 
 ENV DEVCONTAINER_DEBIAN_VERSION=13 \
-    DEVCONTAINER_NODE_VERSION=26.12.1 \
-    DEVCONTAINER_PNPM_VERSION=12.15.0 \
+    DEVCONTAINER_NODE_VERSION=26.13.1 \
+    DEVCONTAINER_PNPM_VERSION=12.23.0 \
     PLAYWRIGHT_BROWSERS_PATH=/opt/playwright \
     LANG=C.UTF-8
 
@@ -75,7 +75,7 @@ FROM scratch AS dist-export
 COPY --from=builder /workspaces/foliohaven/dist/ /
 
 FROM browser-toolchain AS release
-ARG RELEASE_VERSION=1.1.0
+ARG RELEASE_VERSION=1.1.1
 COPY --chown=node:node . .
 ENV FOLIOHAVEN_RELEASE_VERSION=${RELEASE_VERSION}
 RUN node --input-type=module -e "import fs from 'node:fs'; if (JSON.parse(fs.readFileSync('package.json')).version !== process.env.FOLIOHAVEN_RELEASE_VERSION) throw new Error('RELEASE_VERSION_MISMATCH')" \

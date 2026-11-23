@@ -91,7 +91,7 @@ docker compose down
 
 | 工具                | 要求與用途                                                |
 | ------------------- | --------------------------------------------------------- |
-| Node.js／pnpm       | `26.12.1`／`12.15.0`；見 `.node-version`、`package.json`  |
+| Node.js／pnpm       | `26.13.1`／`12.23.0`；見 `.node-version`、`package.json`  |
 | FFmpeg／ffprobe     | 圖片以外的媒體處理與檢查；Debian 的 `ffmpeg` 套件包含兩者 |
 | Bash、flock         | 啟動腳本與程序鎖；Debian 的 `util-linux` 提供 flock       |
 | Python 3、make、g++ | 原生相依套件需要的編譯工具                                |
@@ -181,7 +181,7 @@ Docker 使用者在容器內執行，或在主機為各命令加上 `docker comp
 | `pnpm test:e2e`                           | Chromium、Firefox、WebKit 的操作流程        |
 | `pnpm test:environment`／`pnpm run setup` | 真實工具相容性及三瀏覽器啟停                |
 | `pnpm check:compiler`                     | 套件公開入口及編譯契約                      |
-| `pnpm verify:quick`                       | 日常快速檢查與必要 Chromium 操作           |
+| `pnpm verify:quick`                       | 日常快速檢查與必要 Chromium 操作            |
 | `pnpm verify`                             | 完整品質檢查、測試、正式 Build 與瀏覽器流程 |
 
 測試使用隔離副本；不需要保留範例文章才能測試自己的網站。單獨執行 E2E 的瀏覽器報告位於私有 `.foliohaven/reports/playwright/`；`verify` 的分片報告位於 `.foliohaven/reports/verification/`。完整驗證需執行多組媒體與瀏覽器操作，時間依機器而異；不要同時修改受驗證的來源。
@@ -237,17 +237,17 @@ docker compose up -d --wait --wait-timeout 600 app
 
 讓 AI 先讀 [AGENTS.md](AGENTS.md) 及本 README，再指定要修改的頁面、樣式或文章。AI 與人使用同一套檔案、規則及檢查，不需要另一套內容格式。
 
-| 文件                                                                            | 用途                                        |
-| ------------------------------------------------------------------------------- | ------------------------------------------- |
-| [一般獨立頁面建立流程](docs/blog/一般獨立頁面建立流程.md)                       | 首頁、FAQ、About 等固定頁面的完整範例       |
-| [版型與樣式調整](docs/blog/版型與樣式調整.md)                                   | 共用文章版型、全站外觀與修改位置            |
+| 文件                                                                            | 用途                                         |
+| ------------------------------------------------------------------------------- | -------------------------------------------- |
+| [一般獨立頁面建立流程](docs/blog/一般獨立頁面建立流程.md)                       | 首頁、FAQ、About 等固定頁面的完整範例        |
+| [版型與樣式調整](docs/blog/版型與樣式調整.md)                                   | 共用文章版型、全站外觀與修改位置             |
 | [網站開發與品質標準](docs/blog/網站開發與品質標準.md)                           | 人與 Agent 共用的效能、SEO、無障礙與交付基準 |
-| [SEO 設定與繼承](docs/blog/SEO設定與繼承.md)                                   | 全域、頁型、單筆策略、生效來源與確認流程 |
-| [新增文章流程](docs/blog/新增文章流程.md)                                       | Studio／IDE 管理 HTML、Metadata、SEO 與媒體 |
-| [版本更新與備份](docs/blog/版本更新與備份.md)                                   | 保留自訂程式與作者資料的更新及復原方式      |
-| [Cloudflare 部署](docs/deployment/Cloudflare部署.md)                            | Workers／R2 發布、首次網域分流與失敗處理    |
-| [資料與技術架構規格](<docs/blog/全靜態部落格系統 — 需求與技術架構規格 v1.0.md>) | 資料模型、路由、API、安全及建置契約         |
-| [CHANGELOG](CHANGELOG.md)                                                       | 各版本的功能與使用要求                      |
+| [SEO 設定與繼承](docs/blog/SEO設定與繼承.md)                                    | 全域、頁型、單筆策略、生效來源與確認流程     |
+| [新增文章流程](docs/blog/新增文章流程.md)                                       | Studio／IDE 管理 HTML、Metadata、SEO 與媒體  |
+| [版本更新與備份](docs/blog/版本更新與備份.md)                                   | 保留自訂程式與作者資料的更新及復原方式       |
+| [Cloudflare 部署](docs/deployment/Cloudflare部署.md)                            | Workers／R2 發布、首次網域分流與失敗處理     |
+| [資料與技術架構規格](<docs/blog/全靜態部落格系統 — 需求與技術架構規格 v1.0.md>) | 資料模型、路由、API、安全及建置契約          |
+| [CHANGELOG](CHANGELOG.md)                                                       | 各版本的功能與使用要求                       |
 
 | 路徑                                         | 用途                                 |
 | -------------------------------------------- | ------------------------------------ |
@@ -260,7 +260,7 @@ docker compose up -d --wait --wait-timeout 600 app
 | `studio/`、`server/`                         | 工作室與本機管理服務                 |
 | `tests/`                                     | 單元、整合、瀏覽器測試及隔離範例資料 |
 | `cloudflare/`、`scripts/cloudflare/`         | 公開部署模板與發布、狀態、還原工具   |
-| `.foliohaven/`                                   | 私有工作、交易、快取及復原資料       |
+| `.foliohaven/`                               | 私有工作、交易、快取及復原資料       |
 | `dist/`                                      | 成功建立後可公開交付的完整網站       |
 
 ## 授權

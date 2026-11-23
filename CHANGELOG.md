@@ -6,6 +6,36 @@
 
 ## Unreleased
 
+## 1.1.1
+
+Foliohaven 1.1.1 更新本機工具鏈與網站建置依賴的安全修補，保留既有文章、網站設定、媒體格式及日常操作方式。公開網站仍只交付完整 `dist/`。
+
+### 安全與穩定性
+
+- Node.js 更新為 **26.13.1 LTS**，pnpm 更新為 **12.23.0**；原生環境與 Docker 使用相同精確版本，套件發布滿 24 小時及嚴格檢查規則維持不變。
+- Vite 更新為 **8.3.8**，修補開發服務的安全問題；Studio 與本機預覽仍依原有設定使用，不對公網開放。
+- parse5 更新為 **8.1.1**，納入 HTML 解析與序列化的安全及資源使用修正；Astro 更新為 **7.4.13**，納入動態標籤、網址處理與啟動流程的修正。
+- fast-xml-parser 更新為 **5.12.1**，納入 XML 解析修補及長 SVG 屬性處理改善。
+- Wrangler 更新為 **4.166.0**，連同其 Miniflare／workerd 依賴更新；修補獨立安裝的 Undici 7.x／8.x，保留既有 Workers Static Assets、R2、部署紀錄與受控還原流程。
+- ESLint 更新為 **10.15.0**、typescript-eslint 更新為 **8.73.0**，同步修補工具依賴中的 minimatch。
+- 更新 Astro 型別轉換工具的相依組合，修正型別檢查載入失敗，保留原有完整檢查。
+
+這些修補涉及作者本機、開發預覽、建置及部署工具。個別安全問題的觸發條件依使用功能而異；更新依賴不代表既有網站已遭利用。公開靜態網站不執行本機 Node.js、Studio 或管理 API。
+
+### 由 1.1.0 升級
+
+本版沒有文章或網站設定資料模型轉換。先依[版本更新與備份](docs/blog/版本更新與備份.md)保存完整專案，再在副本整合程式差異及自訂內容；不要以新版範例覆蓋文章、媒體、版型或私有設定。
+
+原生環境改用 Node.js **26.13.1**、pnpm **12.23.0**，依新版 lockfile 完成 frozen 安裝。Docker 使用者依新版 Dockerfile 重建 image；`.env` 如有 `RELEASE_VERSION`，更新為 `1.1.1`，保留自己的 UID／GID、連接埠與其他設定。只重新啟動舊 image 不會更新工具鏈。
+
+升級後檢查 Studio 保存與重新讀取、來源與成功網站預覽、圖片／影片及完整 Build。使用 Cloudflare 時先執行本機 dry-run；真正公開部署仍須明確操作及驗證，不需要因這次工具鏈更新重建 Worker、R2 bucket 或網域規則。
+
+### 下載與使用入口
+
+- [foliohaven-1.1.1-source.tar.gz](https://github.com/hsunAlfred/foliohaven/releases/download/v1.1.1/foliohaven-1.1.1-source.tar.gz)
+- [SHA256SUMS](https://github.com/hsunAlfred/foliohaven/releases/download/v1.1.1/SHA256SUMS)
+- [README：安裝、啟動與操作](https://github.com/hsunAlfred/foliohaven/blob/v1.1.1/README.md)
+
 ## 1.1.0
 
 2026-11-09（Asia/Taipei）

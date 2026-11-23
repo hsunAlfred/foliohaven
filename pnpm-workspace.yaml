@@ -16,7 +16,7 @@ minimumReleaseAgeStrict: true
 storeDir: ${HOME}/.local/share/pnpm/store
 allowBuilds:
   esbuild@0.28.2: true
-  workerd@1.20261019.1: true
+  workerd@1.20261119.1: true
 
 catalog:
   '@aws-sdk/client-s3': 3.1156.0
@@ -36,17 +36,17 @@ catalog:
   '@types/react': 19.3.0
   '@types/react-dom': 19.3.0
   '@vitejs/plugin-react': 6.1.2
-  astro: 7.4.2
+  astro: 7.4.13
   busboy: 1.6.0
   concurrently: 10.0.6
-  eslint: 10.13.0
+  eslint: 10.15.0
   eslint-config-prettier: 10.1.8
   eslint-plugin-astro: 3.2.1
   eslint-plugin-react-hooks: 7.1.1
   eslint-plugin-react-refresh: 0.5.7
-  fast-xml-parser: 5.11.2
+  fast-xml-parser: 5.12.1
   globals: 17.13.0
-  parse5: 8.0.1
+  parse5: 8.1.1
   prettier: 3.9.10
   prettier-plugin-astro: 1.1.1
   react: 19.3.1
@@ -54,8 +54,8 @@ catalog:
   sharp: 0.35.5
   tsx: 4.23.15
   typescript: 6.0.3
-  typescript-eslint: 8.72.0
-  vite: 8.3.5
+  typescript-eslint: 8.73.0
+  vite: 8.3.8
   vitest: 5.0.5
-  wrangler: 4.152.0
+  wrangler: 4.166.0
   zod: 4.6.7
