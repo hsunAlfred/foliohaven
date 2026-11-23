@@ -292,7 +292,7 @@ jobs:
           node-version-file: .node-version
       - name: Install native tools
         run: |
-          npm install --global --no-audit --no-fund pnpm@12.15.0
+          npm install --global --no-audit --no-fund pnpm@12.23.0
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ffmpeg build-essential python3 util-linux
       - name: Reuse native downloads

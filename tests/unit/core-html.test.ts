@@ -193,6 +193,23 @@ describe('HTML-01: fragment structure, TOC and safe references', () => {
     ).toBe(true);
   });
 
+  it('reports consecutive lone low surrogates and continues analyzing following content', () => {
+    const result = analyzeHtml(
+      '<p>\udc00\udc00</p>\n<h2 id="after">After</h2>',
+      { articleId: 'unicode' },
+    );
+    expect(result.toc).toEqual([{ id: 'after', text: 'After', level: 2 }]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: 'HTML_PARSE_ERROR',
+        severity: 'error',
+        articleId: 'unicode',
+        line: 1,
+        column: 4,
+      }),
+    );
+  });
+
   it('collects href locations and allows supported local/external schemes', () => {
     const hrefs = [
       '/notes/example/#part',
@@ -297,6 +314,28 @@ describe('MEDIA-01: source-offset media enhancement', () => {
     expect(enhanceHtmlMedia(result.contentHtml, manifest).contentHtml).toBe(
       result.contentHtml,
     );
+  });
+
+  it('preserves media bytes and diagnostic columns after astral Unicode characters', () => {
+    const before = '<p>🧭 &amp; 🧪</p><h2>Missing</h2>\n<p>🧪';
+    const attributes = `src='${image}' alt='🧭 &amp; 🧪' width="400" srcset="${small} 480w" sizes="100vw" data-note=" > "`;
+    const after = '</p>\n<!-- 🧭 unchanged -->';
+    const original = `${before}<img  ${attributes}>${after}`;
+    const result = enhanceHtmlMedia(original, manifest, {
+      articleId: 'unicode',
+    });
+    expect(result.contentHtml).toBe(
+      `${before}<img  ${attributes} height="200">${after}`,
+    );
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'HTML_HEADING_ID_REQUIRED',
+        severity: 'error',
+        articleId: 'unicode',
+        line: 1,
+        column: 19,
+      }),
+    ]);
   });
 
   it('preserves given attributes and derives only the missing proportional dimension', () => {

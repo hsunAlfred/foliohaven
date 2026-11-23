@@ -1,7 +1,7 @@
 {
   "format": 1,
   "product": "foliohaven",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "files": [
     {
       "path": ".devcontainer/check-environment.sh",
@@ -43,7 +43,7 @@
       "path": ".env.example",
       "bytes": 637,
       "mode": "664",
-      "sha256": "5d7b28657caa74095a0d6e81e19d9d88fe6863df4b975ffdda6e49b3c3202cab"
+      "sha256": "90c6d693c6cfd7ed6eae9a778c463bb0d4711526a93b85edc7c1d255221685d3"
     },
     {
       "path": ".gitattributes",
@@ -61,13 +61,13 @@
       "path": ".github/workflows/check.yml",
       "bytes": 2931,
       "mode": "664",
-      "sha256": "ea667e6e0767680607d224252b5c712e72d94df1d507e690863686893ac70b07"
+      "sha256": "e891565306ad720ba5144c299df3267f50a92e333b5085efb6bee750ce738d44"
     },
     {
       "path": ".github/workflows/release-verify.yml",
       "bytes": 17377,
       "mode": "664",
-      "sha256": "89fa7508993d46aa1844c7acd7353c57a9787735470c47c0e8beaef8fa87a7f0"
+      "sha256": "51442fb8377b59395edf754bbcca9f7a28cce508a3f2e1e504f868f996d85b1c"
     },
     {
       "path": ".gitignore",
@@ -79,7 +79,7 @@
       "path": ".node-version",
       "bytes": 8,
       "mode": "664",
-      "sha256": "2a4a3fac7ea8694f168266bd3a930b3fc5faa6e503d577d99c024f74582e4cb5"
+      "sha256": "5c293036fc0a61ad76e15d85f454c3c7cec157e181e035b69f95058a2c239144"
     },
     {
       "path": ".prettierignore",
@@ -95,9 +95,9 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 17885,
+      "bytes": 20619,
       "mode": "664",
-      "sha256": "78145461ac47b40c6956e07e4cda84e00342bd578a96cb193a4b9f3489f330f4"
+      "sha256": "0712fd3f347b3b65590ba60097b01149adff21379f1a3bedaaa299563ef10d54"
     },
     {
       "path": "cloudflare.config.example.json",
@@ -199,13 +199,13 @@
       "path": "docker-compose.yml",
       "bytes": 1780,
       "mode": "664",
-      "sha256": "5f674ea089cc85c9dac40e353fc660f77f96022a8c4b9a3b01732bb2cc0d69bb"
+      "sha256": "9e2603a0ea92af78b3db075fec272f097b7a46ef89a4786ac65e39775f2d33f4"
     },
     {
       "path": "Dockerfile",
       "bytes": 4125,
       "mode": "664",
-      "sha256": "ab6d5a0ded6a22db5741b56cdaa578c89191d3585e547cdd19c9b7afedc01dc1"
+      "sha256": "88db7730f47e6a0357efdf21670bf03d8f56a12ef5e52799cef8935e2bc893cf"
     },
     {
       "path": "docs/blog/SEO設定與繼承.md",
@@ -239,9 +239,9 @@
     },
     {
       "path": "docs/blog/版本更新與備份.md",
-      "bytes": 13638,
+      "bytes": 15536,
       "mode": "664",
-      "sha256": "16f919fb378612d8256466ba6ac8964a807521acba12ad95b689a3433119055a"
+      "sha256": "6d1ebf80114f6025a876836afe884a083a76faab2bcc38508b8c365fe3feae6b"
     },
     {
       "path": "docs/blog/網站開發與品質標準.md",
@@ -307,13 +307,13 @@
       "path": "package.json",
       "bytes": 3563,
       "mode": "664",
-      "sha256": "8dee302c41b30c27cba320b2df407194f4ecdde9a588d513fbeac359de514b67"
+      "sha256": "56b9e4ff3780ec57664a2dd1575a7ef2fa069bed2ea4ebca06d98b464b676f89"
     },
     {
       "path": "packages/core/package.json",
       "bytes": 604,
       "mode": "664",
-      "sha256": "02f8c9922d72b0ec12a3dca17dcf263e7ed7fc1f79a4fd606ffd3d5d2d2d8223"
+      "sha256": "d13e9b5655a32e049d2666fd63fdda8e0ac923a826cea7487e71ad84efe10450"
     },
     {
       "path": "packages/core/src/content/index.ts",
@@ -481,7 +481,7 @@
       "path": "packages/ui/package.json",
       "bytes": 576,
       "mode": "664",
-      "sha256": "7544e2282c8e242d580f559b5323cf0b507c37bef3142ec2acf1014272fbe38c"
+      "sha256": "aa24e7a387fcdbb8734fd32c6c5dd60c1e8308fba3354847dd3afb77773db806"
     },
     {
       "path": "packages/ui/src/article/ArticlePage.tsx",
@@ -617,15 +617,15 @@
     },
     {
       "path": "pnpm-lock.yaml",
-      "bytes": 214349,
+      "bytes": 247189,
       "mode": "664",
-      "sha256": "3d986bd091bac49bfdbc46e8a61ddc162232ff4616638776f0c8871dea6c4186"
+      "sha256": "d33fb135f87f53c75d5d9e331f01c6f97bfbb0c5ce128d434c4b3b19fa584c9d"
     },
     {
       "path": "pnpm-workspace.yaml",
-      "bytes": 1356,
+      "bytes": 1357,
       "mode": "664",
-      "sha256": "95c432395af95ad52ab8b12be542c222cb67ec24f31995fe6ff80d25ca7f8f83"
+      "sha256": "2ac59829ad10bde574ef4af3642589b3ebff8d785a63af35e812da4f7c39aede"
     },
     {
       "path": "prettier.config.mjs",
@@ -635,9 +635,9 @@
     },
     {
       "path": "README.md",
-      "bytes": 23434,
+      "bytes": 23445,
       "mode": "664",
-      "sha256": "098b28de6cfcad74666980aa18f4ba9b54cffb115bbe056ab5182e598c36b5c6"
+      "sha256": "01466325454b3c38d0129203a680f9f1b5e01a025c15321d372168c2bb91ee14"
     },
     {
       "path": "release/manifest.json",
@@ -679,13 +679,13 @@
       "path": "release/templates/github/workflows/check.yml",
       "bytes": 2931,
       "mode": "664",
-      "sha256": "ea667e6e0767680607d224252b5c712e72d94df1d507e690863686893ac70b07"
+      "sha256": "e891565306ad720ba5144c299df3267f50a92e333b5085efb6bee750ce738d44"
     },
     {
       "path": "release/templates/github/workflows/release-verify.yml",
       "bytes": 17377,
       "mode": "664",
-      "sha256": "89fa7508993d46aa1844c7acd7353c57a9787735470c47c0e8beaef8fa87a7f0"
+      "sha256": "51442fb8377b59395edf754bbcca9f7a28cce508a3f2e1e504f868f996d85b1c"
     },
     {
       "path": "scripts/astro-dev-media.mjs",
@@ -1027,7 +1027,7 @@
       "path": "server/package.json",
       "bytes": 837,
       "mode": "664",
-      "sha256": "b7202ecad1aa293bce285fe1baaf98d74c4a1eabdcdc47b6aed244beece038a2"
+      "sha256": "160695dfb92a1d44cc77a4bf47e38a3d880266cf76fd560f9523a305452eceb1"
     },
     {
       "path": "server/src/build/artifacts/index.ts",
@@ -1411,7 +1411,7 @@
       "path": "site/package.json",
       "bytes": 962,
       "mode": "664",
-      "sha256": "8a3489de1d27bcae714ca77a8575a624e805517e5794314b035eed4e6bb7a0f3"
+      "sha256": "9cdaf6250d6fc33f7b4284a2d871d010b3d8f4b9775b17984812c02f2e6d9025"
     },
     {
       "path": "site/src/components/ArticlesSearch.tsx",
@@ -1573,7 +1573,7 @@
       "path": "studio/package.json",
       "bytes": 809,
       "mode": "664",
-      "sha256": "2cd066e04d6f5c9999040ee07efcb1a03b131a7e78ac6efc90843064899493dd"
+      "sha256": "aa76d35b6fd614763b9816f4957658b87d62d66dfc46384e922a63f5e6e1794a"
     },
     {
       "path": "studio/public/licenses/NotoSansTC-Fontsource-LICENSE.txt",
@@ -3527,9 +3527,9 @@
     },
     {
       "path": "tests/unit/core-html.test.ts",
-      "bytes": 13611,
+      "bytes": 14978,
       "mode": "664",
-      "sha256": "c1ced0da3f5eeb55b858a96b571fa4e93901ac48d97ff05025d9e29f69e0e036"
+      "sha256": "e226eca701a06156bda7116c5811981297457255d6ba55d87f1d7f1899e0fb25"
     },
     {
       "path": "tests/unit/core-processing.test.ts",
