@@ -14,6 +14,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFile } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { promisify } from 'node:util';
 
 const config = await import(
@@ -32,6 +33,7 @@ const workflow = await import(
   new URL('../../scripts/cloudflare/workflow.mjs', import.meta.url).href
 );
 const execute = promisify(execFile);
+const require = createRequire(new URL('../../package.json', import.meta.url));
 const roots: string[] = [];
 const target = {
   schemaVersion: 1,
@@ -61,6 +63,18 @@ afterEach(async () => {
 });
 
 describe('Cloudflare 設定與命令邊界', () => {
+  it('實際安裝的精確版本通過 CLI Cloudflare 工具鏈守門', async () => {
+    for (const [name, version] of [
+      ['wrangler', '4.166.0'],
+      ['@aws-sdk/client-s3', '3.1156.0'],
+    ]) {
+      const installed = JSON.parse(
+        await readFile(require.resolve(`${name}/package.json`), 'utf8'),
+      );
+      expect(installed.version).toBe(version);
+    }
+    await expect(workflow.checkInstalledTools()).resolves.toBeUndefined();
+  });
   it('接受既有四欄與選填付費方案，嚴格拒絕未知欄位', () => {
     const { workersPlan, ...four } = target;
     void workersPlan;
@@ -689,12 +703,18 @@ describe('Cloudflare 正式產物分流與流程整合', () => {
     ]);
     expect(result.journal.uploadStatus).toBe('dry-run');
     expect(result.journal.domainVerification).toBe('pending');
+    expect(result.journal.tools).toEqual({
+      node: process.versions.node,
+      wrangler: '4.166.0',
+      awsSdk: '3.1156.0',
+    });
     const loaded = await state.loadDeployment(
       f.repositoryRoot,
       result.deploymentId,
       target,
     );
     expect(loaded.manifest).toHaveLength(6);
+    expect(loaded.journal.tools).toEqual(result.journal.tools);
     const receipt = await readFile(join(result.root, 'receipt.json'), 'utf8');
     expect(receipt).not.toContain(credentials.R2_SECRET_ACCESS_KEY);
     await privateWrite(

@@ -841,7 +841,7 @@
       "path": "scripts/cloudflare/workflow.mjs",
       "bytes": 20318,
       "mode": "664",
-      "sha256": "190d69b100ac845eb07378538c48189f8f2ef89a9e179a1dd8dd9e7b0acb9095"
+      "sha256": "348cc207adb874f6ef09ef8df0f2240cdff7ce412ae06c5e38d59f35a4de3aa3"
     },
     {
       "path": "scripts/collect-verification.mjs",
@@ -3101,9 +3101,9 @@
     },
     {
       "path": "tests/integration/cloudflare-config-workflow.test.ts",
-      "bytes": 30325,
+      "bytes": 31109,
       "mode": "664",
-      "sha256": "88196b9c9bb1b0db63cf978be25fb82273eae88ac4e2d4a0fadb027412aea70f"
+      "sha256": "486904c325ae7c0fc57aad5157f54bdf5978a5800779b346f677370f24ae391e"
     },
     {
       "path": "tests/integration/cloudflare-domain-workflow.test.ts",
